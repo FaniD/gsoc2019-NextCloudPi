@@ -2,7 +2,7 @@
 
 ![NCP_gsoc logo](https://lh3.googleusercontent.com/Uyfx2IS5XAwGjKBrJoT9HXHz2tSlehIerZlnrx7C85sXMVmSl-XZu3Al7s-9KmnYWbIOuVLa4cfIVEdS81RoIyigZmeKEuYUKYF5cILAYWdY8_Znh0l6dosKIWiS85s_HkJpGluMYdcgT_s_jfoRpSnNE0DMZ7PVorPaPdLNAVyUwuwspP1X4iWG_xVohvpOeT7xe_KYzOqPGOldhzPjkYSe2M8BPUHk51bHWbKBMsE3Xp5FKPjlG877F5Haes_rMZiZR-0m6iutJZ3JYXFUCdYBbmoEQCQzdWWRzC3mbn4zt3e8eCfO8GWsbEqGeDnIQ3zydu0F4jhOyvMM2xqT-tDhS0MskfZAmrlrGWIfe6IDOI5_csIWCB-K9m2w4pGu-izlcHZET4d_PhvBUTQC4GS8wkIUhJPpGLcHdSuhEDUUlGZFyheRsbEXSUmdRHUpUnkL1BIgP_ZYSNJBvmPxoyD8ghim51rYKmdlDEGLl1cqcu573LsjxStt_7c2seY-dVt2ccfBsfuDveieLhuvzq1Z8FFVqEDwvQw3o7GR62UOi08FoIaSD8QUxAMqr949ztwbQGkP2kydvFKE5jufpwlceVSoShEXFqf9mA1pAVwvaHBlaDe4al_ZDdm_oZu4Y_u0Cv9diS_JT2mII3vLiFHYsBlFLUo=w780-h374-no)
 
-**NextCloudPi GSoC Project** is a project selected from GFOSS for GSoC.
+**NextCloudPi GSoC Project** is one of the accepted projects by GFOSS for [GSoC 2019](https://summerofcode.withgoogle.com/about/).
 
 > You can find the proposal that made this project selected [here](https://storage.googleapis.com/summerofcode-prod.appspot.com/gsoc/core_project/doc/6113984657227776_1554818502_Proposal.pdf?Expires=1557956101&GoogleAccessId=summerofcode-prod%40appspot.gserviceaccount.com&Signature=hN4y0k1e8BqXOc8QTr4DIeeWBI6dIjmmNu%2BrnnSq3fLqq58B3KSvMtbk6Hjxn%2FV3llXabBf21qOm3IPTV0kkcQLriafuzK95zsJEUBTTr2xMErzsyLgi2fhHezWJ%2F%2F7B4126iskkcjC4K9bUqYv0%2FoEtATsOjZ4RRcxbVC%2BeOg4gmQhjTowFQnAa0C2pqa3Hq3c4Y0n8f%2BcMz%2FeB29KSvDYGrJL5%2FGO%2BBHtvuKYhErWqo27A4rgDK8NNLED%2FetHM%2F%2FY0TjDPYzGm5jqEFlMJjVzfUsmxM0oQfxoU8MWdK7ZWDQd8buHRCezMpTt3I%2FmlWhr8MtUprKlP%2Fbwk%2FkD4cQ%3D%3D)
 
@@ -14,13 +14,13 @@ Nextcloud requires many advanced tasks in order to be installed. NextCloudPi low
 
 Preinstalling and preconfiguring Nextcloud and all the related components (apache, php, mysql, redis, etc) as well as providing an easy to use interface makes it more user friendly to anyone who wants to take control of their private data.
 
-*NextCloudPi* consists of code that provides:
+*NextCloudPi* consists of code that provides the following components:
 * A ready to use image for Raspberry Pi, Odroid HC1, rock64 and other boards
 * Docker image (arm/arm64/x86)
 * Curl Installer
 * Extra features
 
-It is an official project of Nextcloud which is maintained by the community.
+It is an official project of Nextcloud, which is maintained by the community.
 
 > You can find the source code on the [official project's Github repository](https://github.com/nextcloud/nextcloudpi)
 
@@ -28,7 +28,7 @@ It is an official project of Nextcloud which is maintained by the community.
 
 # NextCloudPi GSoC Project
 
-This project aims to extend NextCloudPi with additional features. These features will give end users more options as well as it will allow NextCloudPi to enter the professional world.
+This project aims to extend NextCloudPi with additional features. These features will not only offer end users more options, but will help NextCloudPi to become more prominent and enter the professional world.
 
 
 ## Features
