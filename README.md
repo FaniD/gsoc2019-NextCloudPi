@@ -4,7 +4,7 @@
 
 **NextCloudPi GSoC Project** is one of the accepted projects by GFOSS for [GSoC 2019](https://summerofcode.withgoogle.com/about/).
 
-> You can find the proposal that made this project selected [here](https://storage.googleapis.com/summerofcode-prod.appspot.com/gsoc/core_project/doc/6113984657227776_1554818502_Proposal.pdf?Expires=1557956101&GoogleAccessId=summerofcode-prod%40appspot.gserviceaccount.com&Signature=hN4y0k1e8BqXOc8QTr4DIeeWBI6dIjmmNu%2BrnnSq3fLqq58B3KSvMtbk6Hjxn%2FV3llXabBf21qOm3IPTV0kkcQLriafuzK95zsJEUBTTr2xMErzsyLgi2fhHezWJ%2F%2F7B4126iskkcjC4K9bUqYv0%2FoEtATsOjZ4RRcxbVC%2BeOg4gmQhjTowFQnAa0C2pqa3Hq3c4Y0n8f%2BcMz%2FeB29KSvDYGrJL5%2FGO%2BBHtvuKYhErWqo27A4rgDK8NNLED%2FetHM%2F%2FY0TjDPYzGm5jqEFlMJjVzfUsmxM0oQfxoU8MWdK7ZWDQd8buHRCezMpTt3I%2FmlWhr8MtUprKlP%2Fbwk%2FkD4cQ%3D%3D)
+> You can find the original proposal for this project [here](https://storage.googleapis.com/summerofcode-prod.appspot.com/gsoc/core_project/doc/6113984657227776_1554818502_Proposal.pdf?Expires=1557956101&GoogleAccessId=summerofcode-prod%40appspot.gserviceaccount.com&Signature=hN4y0k1e8BqXOc8QTr4DIeeWBI6dIjmmNu%2BrnnSq3fLqq58B3KSvMtbk6Hjxn%2FV3llXabBf21qOm3IPTV0kkcQLriafuzK95zsJEUBTTr2xMErzsyLgi2fhHezWJ%2F%2F7B4126iskkcjC4K9bUqYv0%2FoEtATsOjZ4RRcxbVC%2BeOg4gmQhjTowFQnAa0C2pqa3Hq3c4Y0n8f%2BcMz%2FeB29KSvDYGrJL5%2FGO%2BBHtvuKYhErWqo27A4rgDK8NNLED%2FetHM%2F%2FY0TjDPYzGm5jqEFlMJjVzfUsmxM0oQfxoU8MWdK7ZWDQd8buHRCezMpTt3I%2FmlWhr8MtUprKlP%2Fbwk%2FkD4cQ%3D%3D)
 
 ## Abstract
 
