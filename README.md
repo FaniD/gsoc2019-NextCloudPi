@@ -1,6 +1,6 @@
 # The missing features of NextCloudPi - Google Summer of Code 2019
 
-![NCP_gsoc logo](https://lh3.googleusercontent.com/Uyfx2IS5XAwGjKBrJoT9HXHz2tSlehIerZlnrx7C85sXMVmSl-XZu3Al7s-9KmnYWbIOuVLa4cfIVEdS81RoIyigZmeKEuYUKYF5cILAYWdY8_Znh0l6dosKIWiS85s_HkJpGluMYdcgT_s_jfoRpSnNE0DMZ7PVorPaPdLNAVyUwuwspP1X4iWG_xVohvpOeT7xe_KYzOqPGOldhzPjkYSe2M8BPUHk51bHWbKBMsE3Xp5FKPjlG877F5Haes_rMZiZR-0m6iutJZ3JYXFUCdYBbmoEQCQzdWWRzC3mbn4zt3e8eCfO8GWsbEqGeDnIQ3zydu0F4jhOyvMM2xqT-tDhS0MskfZAmrlrGWIfe6IDOI5_csIWCB-K9m2w4pGu-izlcHZET4d_PhvBUTQC4GS8wkIUhJPpGLcHdSuhEDUUlGZFyheRsbEXSUmdRHUpUnkL1BIgP_ZYSNJBvmPxoyD8ghim51rYKmdlDEGLl1cqcu573LsjxStt_7c2seY-dVt2ccfBsfuDveieLhuvzq1Z8FFVqEDwvQw3o7GR62UOi08FoIaSD8QUxAMqr949ztwbQGkP2kydvFKE5jufpwlceVSoShEXFqf9mA1pAVwvaHBlaDe4al_ZDdm_oZu4Y_u0Cv9diS_JT2mII3vLiFHYsBlFLUo=w780-h374-no)
+![NCP_gsoc logo](https://www.dropbox.com/s/vc41b0g6pzs21l6/NCP_GSOC.png?raw=1)
 
 **NextCloudPi GSoC Project** is one of the accepted projects by GFOSS for [GSoC 2019](https://summerofcode.withgoogle.com/about/).
 
@@ -84,7 +84,7 @@ NCP project already provides a Vagrantfile in the Github repository and therefor
 This option will be implemented using a Docker Swarm system and will be easily set up through a bash script or an Ansible playbook, requiring the domain (or sub-domain) on which Nextcloud will be served, IP or Domain on which x64 machines can be reached with SSH, the choice of using an SSH key or password and the password (optional).  
 The following figure illustrates the Docker Swarm system we describe.
 
-![Docker Swarm system](https://lh3.googleusercontent.com/8mMQ9WVRkKcjzz1WRlRx34ucduzmvQduACOPo6lzfIXR2IKEkPLXdOvnCtJNV7HIbOLNbR3nO9oGLuvwWF8k_nA3f9vF-EikvtGWVokS3GXr_ORh4oB1NFuBGuxPvOYdzdaWlNqFxcjsoAh1SQEkBsSjO89igF1xMezgUQoU1lzElegbSLdEfv7Zed-C5B8Bl2OvVj8MhCtW3s4n09cMwEtbBy4wA2kxT3YO1tvQCw1-hBp9xIxxCqLzvo2VW6rsBZbbbstoeTY3bWj2ooYFzTYG_Y6wDuxmYplHQ3di4Pap3uUgOker3zbU_mu_9O-J-5pgJ9gDMfyTcuS02DbsPXIKd9Iiisj9Qm4jlt-Ue1IE3CNz1C06EMPiUAdNVC_LBR4fC8_biOWtLq-QhuRccD2ET-uVy4S0l-iP8B5z4K0T4ooHhqe8oZdIKixJQgv67ekZL2RE-J-WTYGaEPp2I0wXncCevotOOD-mGPQhu0g6yjHnAle-TZAuyMYyBMQNpoCSdHR3dQiWjzxPiqw6Wj0gy0x6t70Gji5Fd_wvjxORJVeLwBmuWfoVTkj1PctAwGcBK-A-S0gt8DpZuIpqHmIbYErL9yJGNyAvox4_cDmI9IjiCtecK5FIWOjMmXNTF2r4f0bfnIinUVx7-dlKx4u3IhpLrrU=w681-h363-no)
+![Docker Swarm system](https://www.dropbox.com/s/pxgorn9674ovk35/highav.png?raw=1)
 
 ### 11. Nextcloud Talk
 
@@ -119,7 +119,7 @@ _In accordance with the official [GSoC timeline](https://summerofcode.withgoogle
 
 2. Coding (May 27 - August 19)
 
-![Timeline](https://lh3.googleusercontent.com/yom4jnbJuWRwjUWika9AZG1NLd1D_CzZKCGN0lYdiP64uIqTKnJ_UzB1TUR9dZr9lbyJQ6DoOoKlnqwx38ezufLACluJIbH-E6vl6kOqy8ijNZ89CnveHHCRq76m541gCgd_LIWK79h4cREThFBTZ-915XDdf5wnQ1X1z_sp9CZ5DGGIK2da33MP6eJJJMqHX-FLpfL5WjZYB5EMQY3jM5c39a_VxhAI0wU_8-Inpo8534Bn234dfeWnYVtx3sqmbn5MPvr-myvZE5zMoAzKfDCH9mwypMeeq07me0rsLsb_ttEarjahGxqlj5dpDzU8qCyJrauFvcxqgHio8dUPYGAD1n-3-tjrPMw0kcVLSMw4Zfn30MFAU0h8FeDrasg6STZRlWUQAdEPoZhs0cXDvgFWbKjF8BujQ-kYP1xgxn1i92ZK9_xRtw-lVVEp_tJRjNptNKk7PzXWkX4BFENM1np1OEvTokjxMj3itV7tvN-kF4-hiNgV6J3qJvqj-dgd170Wc5Vv42_QVplWHJhWF1Eaf8nZpeEO6PzOatazIfnVAVXCFf52qz8mEHAiE98wRPCoSYI-88f8e3fHKqoklnhPZ_9-LFpSqDZ0CaMuUwuEcEiBB3xAbylpDmLrZABvOjxEB848gX_yo8i9O3rxZmkbF8HOXLI=w705-h389-no)
+![Timeline](https://www.dropbox.com/s/yoyqclbe01w8m7q/timeline.png?raw=1)
 
 ## Members
 
