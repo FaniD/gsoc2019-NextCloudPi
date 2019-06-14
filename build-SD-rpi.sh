@@ -38,17 +38,17 @@ prepare_chroot_raspbian "$IMG"
 
 mkdir raspbian_root/tmp/ncp-build
 rsync -Aax --exclude-from .gitignore --exclude *.img --exclude *.bz2 . raspbian_root/tmp/ncp-build
-
+echo "====After rsync===="
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   sudo chroot raspbian_root /bin/bash <<'EOFCHROOT'
     set -e
-
+    echo "=== GETS IN CHROOT ==="
     # mark the image as an image build
     touch /.ncp-image
 
     # update packages
     apt-get update
-
+    echo "=== UPDATE IS DONE === "
     # As of 10-2018 this upgrades raspi-kernel and messes up wifi and BTRFS
     #apt-get upgrade -y
     #apt-get dist-upgrade -y
