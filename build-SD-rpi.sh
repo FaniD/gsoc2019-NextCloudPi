@@ -68,7 +68,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     run_app_unsafe bin/ncp/CONFIG/nc-nextcloud.sh
     install_app    ncp.sh
     run_app_unsafe bin/ncp/CONFIG/nc-init.sh
+    echo "====== PRE POST INST ========"
     run_app_unsafe post-inst.sh
+    echo "====== AFTER POST INST ====="
 
     # harden SSH further for Raspbian
     sed -i 's|^#PermitRootLogin .*|PermitRootLogin no|' /etc/ssh/sshd_config
