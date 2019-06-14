@@ -134,6 +134,7 @@ jobs:
           - export PATH=$PATH:$PWD
             
           before_script:
+          - sed -i "s,(install),install," etc/library.sh
           - docker load --input docker_x86/nextcloudpi-amd64.tar
           - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-amd64:latest ${IP}
@@ -161,6 +162,7 @@ jobs:
           - export PATH=$PATH:$PWD
             
           before_script:
+          - sed -i "s,(install),install," etc/library.sh
           - docker load --input docker_armhf/nextcloudpi-armhf.tar
           - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-armhf:latest ${IP}
@@ -188,6 +190,7 @@ jobs:
           - export PATH=$PATH:$PWD
             
           before_script:
+          - sed -i "s,(install),install," etc/library.sh
           - docker load --input docker_arm64/nextcloudpi-arm64v8.tar
           - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-arm64v8:latest ${IP}
