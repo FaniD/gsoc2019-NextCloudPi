@@ -27,10 +27,10 @@ prepare_dirs                   # tmp cache output
 download_raspbian "$IMG"
 resize_image      "$IMG" "$SIZE"
 update_boot_uuid  "$IMG"       # PARTUUID has changed after resize
-
+echo "===AFTER PREPARATIOS==="
 # make sure we don't accidentally disable first run wizard
 rm -f ncp-web/{wizard.cfg,ncp-web.cfg}
-
+echo "===PRE BUILD NCP==="
 ## BUILD NCP
 
 echo -e "\e[1m\n[ Build NCP ]\e[0m"
