@@ -63,9 +63,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     source etc/library.sh
     mkdir -p /usr/local/etc/ncp-config.d
     cp etc/ncp-config.d/nc-nextcloud.cfg /usr/local/etc/ncp-config.d/
+    echo "=== PRE LAMP ==="
     install_app    lamp.sh
+    echo "=== INSTALL NC ==="
     install_app    bin/ncp/CONFIG/nc-nextcloud.sh
     run_app_unsafe bin/ncp/CONFIG/nc-nextcloud.sh
+    echo "=== INSTALL NCP ==="
     install_app    ncp.sh
     run_app_unsafe bin/ncp/CONFIG/nc-init.sh
     echo "====== PRE POST INST ========"
