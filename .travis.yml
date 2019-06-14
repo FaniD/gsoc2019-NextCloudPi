@@ -22,7 +22,8 @@ cache:
 jobs:
   include:
         - stage: building_x86
-
+          env:
+              CACHE_NAME=JOB_X86
           ### x86 Docker images
           install:
           - ./.travis/configure_docker.sh #upgrading docker
@@ -45,6 +46,8 @@ jobs:
 
         - stage: building_armhf
           ### armhf Docker images
+          env:
+              CACHE_NAME=JOB_ARM
           install:
           - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
           - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
