@@ -139,7 +139,6 @@ jobs:
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-amd64:latest ${IP}
 
           script:
-          - sleep 60
           - ./tests/activation_tests.py ${IP}
           - sleep 60
           - ./tests/nextcloud_tests.py ${IP}
@@ -166,7 +165,6 @@ jobs:
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-armhf:latest ${IP}
 
           script:
-          - sleep 60
           - ./tests/activation_tests.py ${IP}
           - sleep 60
           - ./tests/nextcloud_tests.py ${IP}
@@ -193,7 +191,6 @@ jobs:
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-arm64v8:latest ${IP}
 
           script:
-          - sleep 60
           - ./tests/activation_tests.py ${IP}
           - sleep 60
           - ./tests/nextcloud_tests.py ${IP}
