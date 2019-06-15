@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 
-### Usage: Before you run this daemon,
-### generate a token on Github page 
-### (https://github.com/settings/tokens) and
-### export it on host machine as an env var
-### named GITHUB_TOKEN as follows:
-### EXPORT GITHUB_TOKEN=<github token>
-### and then execute the script:
-### python restart_failed_jobs.py
-### It will return as soon as the build passes
+"""
+
+Automatic restarting failed jobs on Travis
+
+This script constitutes an agent on host who
+uses travis-cli to monitor the status of the
+most recent build and restart any failed jobs.
+Before running this script, generate a token on
+Github page (https://github.com/settings/tokens)
+and export it on host machine as an env var
+named GITHUB_TOKEN
+(EXPORT GITHUB_TOKEN=<github token>)
+The script will return when the build passes.
+
+    python restart_failed_jobs.py
+
+"""
 
 import subprocess, re, os, signal, sys
 

@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 
-### Usage: Before you run this daemon,
-### generate a token on Github page 
-### (https://github.com/settings/tokens) and
-### export it on host machine as an env var
-### named GITHUB_TOKEN as follows:
-### EXPORT GITHUB_TOKEN=<github token>
-### and then execute the script:
-### python clear_travis_cache.py
+"""
+
+Automatic clearing travis cache
+
+Before each build in Travis the cache
+should be clean, for having a new clean
+environment.
+Before running this script, generate a
+token on Github page 
+(https://github.com/settings/tokens)
+and export it on host machine as an
+env var named GITHUB_TOKEN 
+(EXPORT GITHUB_TOKEN=<github token>)
+
+    python clear_travis_cache.py
+
+"""
 
 import subprocess, re, os, signal, sys
 
