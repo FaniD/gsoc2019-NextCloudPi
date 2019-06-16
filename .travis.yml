@@ -3,7 +3,6 @@ stages:
         - building_part2
         - testing
         - pushing_images
-        - pushing_manifest
 sudo: required
 language: generic
 dist: xenial
@@ -19,29 +18,6 @@ jobs:
   include:
         - stage: building_part1
 
-          ### x86 Docker images
-          env:
-              CACHE_NAME=X86
-          install:
-          - ./.travis/configure_docker.sh #upgrading docker
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
-
-          script:
-                  #- sed -i "s,(install),install," etc/library.sh
-          - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done & 
-          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-amd64:latest --pull --build-arg arch=amd64 --build-arg arch_qemu=x86_64 > output
-          - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
-          - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-amd64:latest --build-arg arch=amd64 > output
-          - sed -i '/open_files_limit=65536/d' lamp.sh
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloud/Dockerfile -t ownyourbits/nextcloud-amd64:latest --build-arg arch=amd64 > output
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloudpi/Dockerfile -t ownyourbits/nextcloudpi-amd64:latest --build-arg arch=amd64 > output
-          - docker save --output docker_cached/debian-ncp-amd64.tar ownyourbits/debian-ncp-amd64:latest
-          - docker save --output docker_cached/lamp-amd64.tar ownyourbits/lamp-amd64:latest
-          - docker save --output docker_cached/nextcloud-amd64.tar ownyourbits/nextcloud-amd64:latest
-          - docker save --output docker_cached/nextcloudpi-amd64.tar ownyourbits/nextcloudpi-amd64:latest
-
-        - 
           ### armhf Docker images
           env:
               CACHE_NAME=ARMHF
@@ -56,34 +32,12 @@ jobs:
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
           - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-armhf:latest --pull --build-arg arch=armhf --build-arg arch_qemu=arm > output
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
-          - sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
+            #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
           - tail -f output &
           - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-armhf:latest --build-arg arch=armhf > output
           - sed -i '/open_files_limit=65536/d' lamp.sh
           - docker save --output docker_cached/debian-ncp-armhf.tar ownyourbits/debian-ncp-armhf:latest
           - docker save --output docker_cached/lamp-armhf.tar ownyourbits/lamp-armhf:latest
-
-        -
-          ### arm64 Docker images
-          env:
-              CACHE_NAME=ARM64
-          install:
-          - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
-
-          script:
-          - sed -i "s,(install),install," etc/library.sh
-          - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-arm64v8:latest --build-arg arch=arm64v8 --build-arg arch_qemu=aarch64 > output
-          - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
-            #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
-          - tail -f output &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-arm64v8:latest --build-arg arch=arm64v8 > output
-          - sed -i '/open_files_limit=65536/d' lamp.sh
-          - docker save --output docker_cached/debian-ncp-arm64v8.tar ownyourbits/debian-ncp-arm64v8:latest
-          - docker save --output docker_cached/lamp-arm64v8.tar ownyourbits/lamp-arm64v8:latest
 
         - stage: building_part2
 
@@ -108,57 +62,9 @@ jobs:
           - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloudpi/Dockerfile -t ownyourbits/nextcloudpi-armhf:latest --build-arg arch=armhf > output
           - docker save --output docker_cached/nextcloud-armhf.tar ownyourbits/nextcloud-armhf:latest
           - docker save --output docker_cached/nextcloudpi-armhf.tar ownyourbits/nextcloudpi-armhf:latest
-        -
-          ### arm64v8 Docker images
-          env:
-              CACHE_NAME=ARM64
-          install:
-          - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
-
-          before_script:
-          - docker load --input docker_cached/lamp-arm64v8.tar
-            #- sed -i "s,(install),install," etc/library.sh
-
-          script: 
-          - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloud/Dockerfile -t ownyourbits/nextcloud-arm64v8:latest --build-arg arch=arm64v8 > output
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloudpi/Dockerfile -t ownyourbits/nextcloudpi-arm64v8:latest --build-arg arch=arm64v8 > output
-          - docker save --output docker_cached/nextcloud-arm64v8.tar ownyourbits/nextcloud-arm64v8:latest
-          - docker save --output docker_cached/nextcloudpi-arm64v8.tar ownyourbits/nextcloudpi-arm64v8:latest
 
         - stage: testing
 
-          ### x86 Docker images
-          env:
-              CACHE_NAME=X86
-          install:
-          - ./.travis/configure_docker.sh
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features      
-          - export MOZ_HEADLESS=1
-          - sudo apt-get install python3-pip
-          - sudo python3 -m pip install selenium
-          - wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz
-          - tar -xvzf geckodriver*
-          - chmod +x geckodriver
-          - export PATH=$PATH:$PWD
-            
-          before_script:
-          - docker load --input docker_cached/nextcloudpi-amd64.tar
-          - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-          - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-amd64:latest ${IP}
-
-          script:
-          - sleep 60
-          - ./tests/activation_tests.py ${IP}
-          - sleep 60
-          - ./tests/nextcloud_tests.py ${IP}
-          - sleep 5
-          - ./tests/system_tests.py ncp@${IP}
-
-        -
           ### armhf Docker images
           env:
               CACHE_NAME=ARMHF
@@ -187,68 +93,7 @@ jobs:
           - sleep 5
           - ./tests/system_tests.py ncp@${IP} 
 
-        -
-          ### arm64 Docker images
-          env:
-              CACHE_NAME=ARM64
-          install:
-          - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features      
-          - export MOZ_HEADLESS=1
-          - sudo apt-get install python3-pip
-          - sudo python3 -m pip install selenium
-          - wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz
-          - tar -xvzf geckodriver*
-          - chmod +x geckodriver
-          - export PATH=$PATH:$PWD
-            
-          before_script:
-          - docker load --input docker_cached/nextcloudpi-arm64v8.tar
-          - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-          - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-arm64v8:latest ${IP}
-
-          script:
-          - sleep 60
-          - ./tests/activation_tests.py ${IP}
-          - sleep 60
-          - ./tests/nextcloud_tests.py ${IP}
-          - sleep 5
-          - ./tests/system_tests.py ncp@${IP} 
-          
         - stage: pushing_images
-
-          ### x86 Docker images
-          env:
-              CACHE_NAME=X86
-
-          install:
-          - ./.travis/configure_docker.sh
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features 
- 
-          before_script:
-          - docker load --input docker_cached/debian-ncp-amd64.tar
-          - docker load --input docker_cached/lamp-amd64.tar
-          - docker load --input docker_cached/nextcloud-amd64.tar
-          - docker load --input docker_cached/nextcloudpi-amd64.tar
-
-          - version=$(git describe --tags --always)
-          - version=${version%-*-*}
-
-          script:
-          - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-
-          - docker tag ownyourbits/debian-ncp-amd64:latest $DOCKER_USERNAME/debian-ncp-x86:"${version}"
-          - docker tag ownyourbits/lamp-amd64:latest $DOCKER_USERNAME/lamp-x86:"${version}"
-          - docker tag ownyourbits/nextcloud-amd64:latest $DOCKER_USERNAME/nextcloud-x86:"${version}"
-          - docker tag ownyourbits/nextcloudpi-amd64:latest $DOCKER_USERNAME/nextcloudpi-x86:"${version}"
-
-          - docker push $DOCKER_USERNAME/debian-ncp-x86:"${version}"
-          - docker push $DOCKER_USERNAME/lamp-x86:"${version}"
-          - docker push $DOCKER_USERNAME/nextcloud-x86:"${version}"
-          - docker push $DOCKER_USERNAME/nextcloudpi-x86:"${version}"
-
-        - 
           ### armhf Docker images
           env:
               CACHE_NAME=ARMHF
@@ -279,52 +124,5 @@ jobs:
           - docker push $DOCKER_USERNAME/nextcloud-armhf:"${version}"
           - docker push $DOCKER_USERNAME/nextcloudpi-armhf:"${version}"
 
-        - 
-          ### arm64v8 Docker images
-          env:
-              CACHE_NAME=ARM64
-
-          install:
-          - ./.travis/configure_docker.sh
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features 
- 
-          before_script:
-          - docker load --input docker_cached/debian-ncp-arm64v8.tar
-          - docker load --input docker_cached/lamp-arm64v8.tar
-          - docker load --input docker_cached/nextcloud-arm64v8.tar
-          - docker load --input docker_cached/nextcloudpi-arm64v8.tar
-
-          - version=$(git describe --tags --always)
-          - version=${version%-*-*}
-
-          script:
-          - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-
-          - docker tag ownyourbits/debian-ncp-arm64v8:latest $DOCKER_USERNAME/debian-ncp-arm64:"${version}"
-          - docker tag ownyourbits/lamp-arm64v8:latest $DOCKER_USERNAME/lamp-arm64:"${version}"
-          - docker tag ownyourbits/nextcloud-arm64v8:latest $DOCKER_USERNAME/nextcloud-arm64:"${version}"
-          - docker tag ownyourbits/nextcloudpi-arm64v8:latest $DOCKER_USERNAME/nextcloudpi-arm64:"${version}"
-
-          - docker push $DOCKER_USERNAME/debian-ncp-arm64:"${version}"
-          - docker push $DOCKER_USERNAME/lamp-arm64:"${version}"
-          - docker push $DOCKER_USERNAME/nextcloud-arm64:"${version}"
-          - docker push $DOCKER_USERNAME/nextcloudpi-arm64:"${version}"
-
-        - stage: pushing_manifest
-
-          before_script:
-          - docker pull $DOCKER_USERNAME/nextcloudpi-x86:latest
-          - docker pull $DOCKER_USERNAME/nextcloudpi-armhf:latest
-          - docker pull $DOCKER_USERNAME/nextcloudpi-arm64:latest
-
-          script:
-          - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-
-          # Manifest
-          - docker manifest create --amend $DOCKER_USERNAME/nextcloudpi $DOCKER_USERNAME/nextcloudpi-x86 $DOCKER_USERNAME/nextcloudpi-armhf $DOCKER_USERNAME/nextcloudpi-arm64
-          - docker manifest annotate $DOCKER_USERNAME/nextcloudpi $DOCKER_USERNAME/nextcloudpi-x86 --os linux --arch amd64
-          - docker manifest annotate $DOCKER_USERNAME/nextcloudpi $DOCKER_USERNAME/nextcloudpi-armhf --os linux --arch arm
-          - docker manifest annotate $DOCKER_USERNAME/nextcloudpi $DOCKER_USERNAME/nextcloudpi-arm64 --os linux --arch arm64v8
-
 notifications:
-  email: false
+        email: false
