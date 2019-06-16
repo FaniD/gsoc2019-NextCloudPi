@@ -25,7 +25,9 @@ IMG=tmp/"$IMG"
 
 prepare_dirs                   # tmp cache output
 download_raspbian "$IMG"
+echo "===PRE RESIZE==="
 resize_image      "$IMG" "$SIZE"
+echo "===PRE UPDATE==="
 update_boot_uuid  "$IMG"       # PARTUUID has changed after resize
 echo "===AFTER PREPARATIOS==="
 # make sure we don't accidentally disable first run wizard
