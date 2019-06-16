@@ -21,8 +21,8 @@ install_app /usr/local/etc/lamp.sh; \
 echo "===Installed mysql, shut it down==="; \
 cat /root/.my.cnf; \
 # stop mysqld
-mysqladmin -u root shutdown; \
-
+tail -f a & mysqladmin -u root shutdown > a; \
+echo "===Mariadb is stopped==="
 # mariaDB fixups (move database to /data-ro, which will be in a persistent volume)
 mkdir -p /data-ro /data; \
 mv /var/lib/mysql /data-ro/database; \
