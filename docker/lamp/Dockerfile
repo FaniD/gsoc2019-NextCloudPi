@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 source /usr/local/etc/library.sh; \
 set +x; \
 install_app /usr/local/etc/lamp.sh; \
-
+echo "===Installed mysql, shut it down===" \
+cat /root/.my.cnf \
 # stop mysqld
 mysqladmin -u root shutdown; \
 

@@ -19,7 +19,7 @@ set -e
 source buildlib.sh
 
 prepare_dirs                   # tmp cache output
-
+echo "===Cloning armbian==="
 # get latest armbian
 [[ -d armbian ]] || git clone https://github.com/armbian/build armbian
 ( cd armbian && git pull --ff-only --tags )

@@ -22,8 +22,9 @@ pgrep -f qemu-arm-static &>/dev/null && { echo "qemu-arm-static already running.
 ## preparations
 
 IMG=tmp/"$IMG"
-
+echo "===PRE PREPARE==="
 prepare_dirs                   # tmp cache output
+echo "===Prepare over==="
 download_raspbian "$IMG"
 echo "===PRE RESIZE==="
 resize_image      "$IMG" "$SIZE"
