@@ -79,7 +79,7 @@ def test_nextcloud(IP):
     """ Login and assert admin page checks"""
     test = Test()
     driver = webdriver.Firefox(service_log_path='/dev/null')
-    driver.implicitly_wait(60)
+    driver.implicitly_wait(120)
     test.new("nextcloud page")
     try:
         driver.get("https://" + IP + "/index.php/settings/admin/overview")
