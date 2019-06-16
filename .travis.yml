@@ -28,7 +28,7 @@ jobs:
           - docker version #Check Docker 18.09 is installed
 
           script:
-          - sed -i "s,(install),install," etc/library.sh
+                  #- sed -i "s,(install),install," etc/library.sh
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
           - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-armhf:latest --pull --build-arg arch=armhf --build-arg arch_qemu=arm > output
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
