@@ -30,7 +30,7 @@ jobs:
           script:
                   #- sed -i "s,(install),install," etc/library.sh
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-armhf:latest --pull --build-arg arch=arm32v7 --build-arg arch_qemu=arm > output
+          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-arm32v7:latest --pull --build-arg arch=arm32v7 --build-arg arch_qemu=arm > output
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
             #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
           - tail -f output &
