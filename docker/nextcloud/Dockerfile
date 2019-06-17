@@ -30,7 +30,9 @@ mv /var/www/nextcloud /data-ro/nextcloud; \
 ln -s /data-ro/nextcloud /var/www/nextcloud; \
 
 # stop mysqld
+/etc/init.d/mysql stop; \
 mysqld stop; \
+
 #mysqladmin -u root shutdown; \
 
 # package cleanup 
