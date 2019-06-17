@@ -26,6 +26,7 @@ jobs:
           - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
           - docker version #Check Docker 18.09 is installed
+          - docker run --rm --privileged multiarch/qemu-user-static:register
 
           script:
                   #- sed -i "s,(install),install," etc/library.sh
