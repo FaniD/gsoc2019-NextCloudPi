@@ -17,7 +17,7 @@ IMG=tmp/"$IMG"
 
 set -e
 source buildlib.sh
-
+echo "===Pre prepare==="
 prepare_dirs                   # tmp cache output
 echo "===Cloning armbian==="
 # get latest armbian
