@@ -19,7 +19,7 @@ source /usr/local/etc/library.sh; \
 set +x; \
 install_app /usr/local/etc/lamp.sh; \
 echo "===Installed mysql, shut it down==="; \
-cat /root/.my.cnf; \
+mysqladmin -u root status; \
 # stop mysqld
 tail -f a & mysqladmin -f -u root shutdown > a; \
 echo "===Mariadb is stopped==="; \
