@@ -20,6 +20,7 @@ set +x; \
 install_app /usr/local/etc/lamp.sh; \
 echo "===Installed mysql, shut it down==="; \
 mysqld stop; \
+mysqld status; \
 # stop mysqld
 #tail -f a & mysqladmin -f -u root shutdown > a; \
 echo "===Mariadb is stopped==="; \
