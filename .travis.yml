@@ -30,14 +30,14 @@ jobs:
           script:
                   #- sed -i "s,(install),install," etc/library.sh
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-armhf:latest --pull --build-arg arch=armhf --build-arg arch_qemu=arm > output
+          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-armhf:latest --pull --build-arg arch=arm32v7 --build-arg arch_qemu=arm > output
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
             #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
           - tail -f output &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-armhf:latest --build-arg arch=armhf > output
+          - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-arm32v7:latest --build-arg arch=arm32v7 > output
           - sed -i '/open_files_limit=65536/d' lamp.sh
-          - docker save --output docker_cached/debian-ncp-armhf.tar ownyourbits/debian-ncp-armhf:latest
-          - docker save --output docker_cached/lamp-armhf.tar ownyourbits/lamp-armhf:latest
+          - docker save --output docker_cached/debian-ncp-arm32v7.tar ownyourbits/debian-ncp-arm32v7:latest
+          - docker save --output docker_cached/lamp-arm32v7.tar ownyourbits/lamp-arm32v7:latest
 
         - stage: building_part2
 
@@ -53,16 +53,16 @@ jobs:
           - docker version #Check Docker 18.09 is installed
 
           before_script:
-          - docker load --input docker_cached/lamp-armhf.tar
+          - docker load --input docker_cached/lamp-arm32v7.tar
             #- sed -i "s,(install),install," etc/library.sh
 
           script: 
+          - touch output
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - tail -f output &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloud/Dockerfile -t ownyourbits/nextcloud-armhf:latest --build-arg arch=armhf > output
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloudpi/Dockerfile -t ownyourbits/nextcloudpi-armhf:latest --build-arg arch=armhf > output
-          - docker save --output docker_cached/nextcloud-armhf.tar ownyourbits/nextcloud-armhf:latest
-          - docker save --output docker_cached/nextcloudpi-armhf.tar ownyourbits/nextcloudpi-armhf:latest
+          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloud/Dockerfile -t ownyourbits/nextcloud-arm32v7:latest --build-arg arch=arm32v7 > output
+          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloudpi/Dockerfile -t ownyourbits/nextcloudpi-arm32v7:latest --build-arg arch=arm32v7 > output
+          - docker save --output docker_cached/nextcloud-arm32v7.tar ownyourbits/nextcloud-arm32v7:latest
+          - docker save --output docker_cached/nextcloudpi-arm32v7.tar ownyourbits/nextcloudpi-arm32v7:latest
 
         - stage: testing
 
@@ -82,9 +82,9 @@ jobs:
           - export PATH=$PATH:$PWD
             
           before_script:
-          - docker load --input docker_cached/nextcloudpi-armhf.tar
+          - docker load --input docker_cached/nextcloudpi-arm32v7.tar
           - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-          - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-armhf:latest ${IP}
+          - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-arm32v7:latest ${IP}
 
           script:
           - sleep 60

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
 
-ARG arch=armhf
+ARG arch=arm32v7
 
 FROM ownyourbits/debian-ncp-${arch}
 
@@ -19,10 +19,10 @@ source /usr/local/etc/library.sh; \
 set +x; \
 install_app /usr/local/etc/lamp.sh; \
 echo "===Installed mysql, shut it down==="; \
-mysqld stop; \
-mysqld status; \
+#mysqld stop; \
+/etc/init.d/mysql status; \
 # stop mysqld
-#tail -f a & mysqladmin -f -u root shutdown > a; \
+tail -f a & mysqladmin -f -u root shutdown > a; \
 echo "===Mariadb is stopped==="; \
 # mariaDB fixups (move database to /data-ro, which will be in a persistent volume)
 mkdir -p /data-ro /data; \

@@ -51,7 +51,6 @@ install()
     # mariaDB password
     local DBPASSWD="default"
     echo -e "[client]\npassword=$DBPASSWD" > /root/.my.cnf
-    echo -e "socket=/run/mysqld/mysqld.sock"  >> /root/.my.cnf
     chmod 600 /root/.my.cnf
 
     debconf-set-selections <<< "mariadb-server-5.5 mysql-server/root_password password $DBPASSWD"

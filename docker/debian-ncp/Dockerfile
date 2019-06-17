@@ -1,4 +1,4 @@
-ARG arch=armhf
+ARG arch=arm32v7
 ARG arch_qemu=arm
 FROM debian:stretch-slim AS qemu
 

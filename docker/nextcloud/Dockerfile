@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
 
-ARG arch=armhf
+ARG arch=arm32v7
 
 FROM ownyourbits/lamp-${arch}
 
