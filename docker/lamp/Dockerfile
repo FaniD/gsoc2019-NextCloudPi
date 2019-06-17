@@ -22,7 +22,7 @@ echo "===Installed mysql, shut it down==="; \
 #mysqld stop; \
 /etc/init.d/mysql status; \
 # stop mysqld
-tail -f a & mysqladmin -f -u root shutdown > a; \
+mysqladmin -u root shutdown; \
 echo "===Mariadb is stopped==="; \
 # mariaDB fixups (move database to /data-ro, which will be in a persistent volume)
 mkdir -p /data-ro /data; \

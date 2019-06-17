@@ -30,8 +30,8 @@ mv /var/www/nextcloud /data-ro/nextcloud; \
 ln -s /data-ro/nextcloud /var/www/nextcloud; \
 
 # stop mysqld
-mysqld stop; \
-#mysqladmin -u root shutdown; \
+#mysqld stop; \
+mysqladmin -u root shutdown; \
 
 # package cleanup 
 apt-get autoremove -y; \

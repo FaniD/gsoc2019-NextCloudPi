@@ -26,7 +26,6 @@ jobs:
           - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
           - docker version #Check Docker 18.09 is installed
-          - docker run --rm --privileged multiarch/qemu-user-static:register
 
           script:
                   #- sed -i "s,(install),install," etc/library.sh
@@ -86,7 +85,7 @@ jobs:
           - docker load --input docker_cached/nextcloudpi-arm32v7.tar
           - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
           - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-arm32v7:latest ${IP}
-
+          - docker logs -f nextcloudpi
           script:
           - sleep 60
           - ./tests/activation_tests.py ${IP}
