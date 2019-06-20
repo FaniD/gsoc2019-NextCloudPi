@@ -1,26 +1,5 @@
 #!/bin/bash
 
-# update latest NextCloudPi code from github
-
-{
-  [ "$(id -u)" -ne 0 ] && { printf "Must be run as root. Try 'sudo $0'\n"; exit 1; }
-
-  BRANCH="${1:-master}"
-  [[ "$BRANCH" != "master" ]] && echo "INFO: updating to development branch '$BRANCH'"
-
-  TMPDIR="$( mktemp -d /tmp/ncp-update.XXXXXX || ( echo "Failed to create temp dir. Exiting" >&2; exit 1 ) )"
-  trap "cd /; rm -rf \"${TMPDIR}\"; exit 0" 0 1 2 3 15
-
-  echo -e "Downloading updates"
-  git clone --depth 20 -b "$BRANCH" -q https://github.com/nextcloud/nextcloudpi.git "$TMPDIR" || {
-    echo "No internet connectivity"
-    exit 1
-  }
-
-  [[ -f /.ncp-image ]] || cd "$TMPDIR"         # update locally during build
-
-  echo -e "Performing updates"
-
   # Latest checkpoint is the version right before the latest cleanup of update.sh
   #latest_checkpoint="1.10.11" # Static insert now, fix later
   # Get the array of updates dir
@@ -28,23 +7,30 @@
   while read line ; do
     updates_list[ $i ]="$line"
     (( i++ ))
-  done < <( ls -1 updates | sort -V)
+  done < <( ls -1 updates | sort -V )
 
-  starting_checkpoint=0
-  len=${#updates_list[@]}
-  end_of_list=$(expr $len - 1)
+ echo "Updates directory:"
+ for i in ${updates_list[*]} ; do
+	 echo "${i}"
+ done
 
   # The latest checkpoint is the newer version in updates dir
-  latest_checkpoint=${updates_list[$end_of_list]}
-
+  en=${#updates_list[@]} # don't mind the names here
+  ena=$(expr $en - 1) # They're fixed in ncp-update
+  latest_checkpoint=${updates_list[$ena]}
+  echo "====LATEST CHECKPOINT IS ${latest_checkpoint}==="
   # Compare current version with latest checkpoint to see if we need backwards updates
-  MAJOR=$( echo ${latest_checkpoint} | cut -d'_' -f2 )
-  MINOR=$( echo ${latest_checkpoint} | cut -d'_' -f3 )
-  PATCH=$( echo ${latest_checkpoint} | cut -d'_' -f4 )
+  MAJOR=$(echo ${latest_checkpoint} | cut -d'_' -f2 )
+  MINOR=$(echo ${latest_checkpoint} | cut -d'_' -f3 )
+  PATCH=$(echo ${latest_checkpoint} | cut -d'_' -f4 )
 
-  MAJ=$( grep -oP "\d+\.\d+\.\d+" /usr/local/etc/ncp-version | cut -d. -f1 )
-  MIN=$( grep -oP "\d+\.\d+\.\d+" /usr/local/etc/ncp-version | cut -d. -f2 )
-  PAT=$( grep -oP "\d+\.\d+\.\d+" /usr/local/etc/ncp-version | cut -d. -f3 )
+  # Test statically
+  echo "Insert current version (example: 1.10.2)"
+  read version
+  
+  MAJ=$( echo ${version} | cut -d. -f1 )
+  MIN=$( echo ${version} | cut -d. -f2 )
+  PAT=$( echo ${version} | cut -d. -f3 )
 
   # If the system is beyond the latest checkpoint there is no need to get in the loop
   BACKWARDS_UPDATES=false
@@ -58,22 +44,25 @@
   fi
 
   if $BACKWARDS_UPDATES ; then
-
+    echo "===BACKWARDS UPDATES NEEDED==="
     # Execute a series of updates of older versions
 
     # Binary search to find the right checkpoint to begin the updates
+    
+    starting_checkpoint=0
+    len=${#updates_list[@]}
+    end_of_list=$(expr $len - 1)
     
     lower_bound=0
     upper_bound=$end_of_list
     while [ $lower_bound -le $upper_bound ]; do
       x=$(expr $upper_bound + $lower_bound)
       mid=$(expr $x / 2 )
-
       #Compare mid's version with current version
       MAJOR=$( echo ${updates_list[$mid]} | cut -d'_' -f2 )
       MINOR=$( echo ${updates_list[$mid]} | cut -d'_' -f3 )
       PATCH=$( echo ${updates_list[$mid]} | cut -d'_' -f4 )
-
+      
       apply_update=false
       if [ "$MAJOR" -gt "$MAJ" ]; then
         apply_update=true
@@ -86,7 +75,6 @@
       if $apply_update ; then 
       # Mid's version update is applicable to the current version
       # Check if the previous checkpoint (mid-1) has already been applied
-
         previous=$(expr $mid - 1)
         if [ "$mid" -gt 0 ] ; then
           #Compare previous's version with current version
@@ -119,13 +107,12 @@
       else #[ $item -gt ${arr[$mid]} ] ; then
 	# Mid's version update is not applicable to the current version (has already been applied)
         # Check if the next checkpoint (mid+1) has already been applied
-
 	next=$(expr $mid + 1)
         #Compare next's version with current version
         MAJOR_=$( echo ${updates_list[$next]} | cut -d'_' -f2 )
         MINOR_=$( echo ${updates_list[$next]} | cut -d'_' -f3 )
         PATCH_=$( echo ${updates_list[$next]} | cut -d'_' -f4 )
-      
+        
         applied=true
         if [ "$MAJOR_" -gt "$MAJ" ]; then
           applied=false
@@ -146,39 +133,19 @@
       fi
     done
 
+
+    echo "===Starting checkpoint is ${starting_checkpoint}: ${updates_list[${starting_checkpoint}]} ==="
     for(( i=${starting_checkpoint}; i<=${end_of_list}; i++)); do
       update_file=${updates_list[i]}
-
-      MAJ=$( echo "${update_file}" | cut -d. -f2 )
-      MIN=$( echo "${update_file}" | cut -d. -f3 )
-      PAT=$( echo "${update_file}" | cut -d. -f4 )
-
       #tag_update="v${MAJ}.${MIN}.${PAT}"
       #git checkout ${tag_update}
-      echo "Update system to version ${MAJ}.${MIN}.${PAT}"
-      ./updates/${update_file} || exit 1
+      #./updates/${update_file} || exit 1
+
+      echo "===Update ${update_file}==="
     done
   else
     # Up to date system updates
-    ./update.sh || exit 1
+    echo "No backwards updates. Just update.sh. "
+   # ./update.sh || exit 1
   fi
 
-  cd "$TMPDIR"
-  VER=$( git describe --always --tags | grep -oP "v\d+\.\d+\.\d+" )
-
-  # check format
-  grep -qP "v\d+\.\d+\.\d+" <<< "$VER" || { "Error: missing version"; exit 1; }
-
-  echo "$VER" > /usr/local/etc/ncp-version
-  echo "$VER" > /var/run/.ncp-latest-version
-
-  # write changelog
-  git log --graph --oneline --decorate \
-    --pretty=format:"[%D] %s" --date=short | \
-    grep 'tag: v' | \
-    sed '/HEAD ->\|origin/s|\[.*\(tag: v[0-9]\+\.[0-9]\+\.[0-9]\+\).*\]|[\1]|' | \
-    sed 's|* \[tag: |[|' > /usr/local/etc/ncp-changelog
-
-  echo -e "NextCloudPi updated to version $VER"
-  exit 0
-} # force to read the whole thing into memory, as its contents might change in update.sh
