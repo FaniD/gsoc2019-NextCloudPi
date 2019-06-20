@@ -10,6 +10,8 @@
 
 set -e
 
+echo -e "Updating from version 1.10.0 to version 1.10.11"
+
 CONFDIR=/usr/local/etc/ncp-config.d/
 
 # don't make sense in a docker container
@@ -27,8 +29,6 @@ nc-init
 UFW
 nc-snapshot
 nc-snapshot-auto
-nc-snapshot-sync
-nc-restore-snapshot
 nc-audit
 nc-hdd-monitor
 nc-zram
@@ -119,7 +119,7 @@ cp -r ncp-app /var/www/
   done
 
   # update services
-  cp docker/{lamp/010lamp,nextcloud/020nextcloud,nextcloudpi/000ncp} /etc/services-enabled.d
+  cp docker-common/{lamp/010lamp,nextcloud/020nextcloud,nextcloudpi/000ncp} /etc/services-enabled.d
 
 }
 
@@ -130,23 +130,75 @@ cp -r ncp-app /var/www/
 
   # docker images only
   [[ -f /.docker-image ]] && {
+    # shouldn't be present in docker
+    rm -f /usr/local/bin/ncp/SYSTEM/nc-zram.sh /usr/local/etc/ncp-config.d/nc-zram.cfg
     :
   }
 
   # for non docker images
   [[ ! -f /.docker-image ]] && {
-    cat > /etc/fail2ban/filter.d/ufwban.conf <<'EOF'
-[INCLUDES]
-before = common.conf
-[Definition]
-failregex = UFW BLOCK.* SRC=
-ignoreregex =
-EOF
     :
   }
-
+  
   # update to the latest version
   is_active_app nc-autoupdate-nc && run_app nc-autoupdate-nc
+
+  # configure MariaDB (UTF8 4 byte support)
+  [[ -f /etc/mysql/mariadb.conf.d/91-ncp.cnf ]] || {
+    cat > /etc/mysql/mariadb.conf.d/91-ncp.cnf <<EOF
+[mysqld]
+transaction_isolation = READ-COMMITTED
+innodb_large_prefix=true
+innodb_file_per_table=1
+innodb_file_format=barracuda
+
+[server]
+# innodb settings
+skip-name-resolve
+innodb_buffer_pool_size = 256M
+innodb_buffer_pool_instances = 1
+innodb_flush_log_at_trx_commit = 2
+innodb_log_buffer_size = 32M
+innodb_max_dirty_pages_pct = 90
+innodb_log_file_size = 32M
+
+# disable query cache
+query_cache_type = 0
+query_cache_size = 0
+
+# other
+tmp_table_size= 64M
+max_heap_table_size= 64M
+EOF
+    ncc maintenance:mode --on
+    service mysql restart
+    ncc maintenance:mode --off
+  }
+
+  # disable .user.ini
+  PHPVER=7.2
+  [[ -f /etc/php/${PHPVER}/fpm/conf.d/90-ncp.ini ]] || {
+    MAXFILESIZE="$(grep upload_max_filesize /var/www/nextcloud/.user.ini | cut -d= -f2)"
+    MEMORYLIMIT="$(grep memory_limit        /var/www/nextcloud/.user.ini | cut -d= -f2)"
+    cat > /etc/php/${PHPVER}/fpm/conf.d/90-ncp.ini <<EOF
+; disable .user.ini files for performance and workaround NC update bugs
+user_ini.filename =
+
+; from Nextcloud .user.ini
+upload_max_filesize=$MAXFILESIZE
+post_max_size=$MAXFILESIZE
+memory_limit=$MEMORYLIMIT
+mbstring.func_overload=0
+always_populate_raw_post_data=-1
+default_charset='UTF-8'
+output_buffering=0
+
+; slow transfers will be killed after this time
+max_execution_time=3600
+max_input_time=3600
+EOF
+    bash -c "sleep 3 && service php$PHPVER-fpm restart" &
+  }
 
   # previews settings
   ncc config:app:set previewgenerator squareSizes --value="32"
@@ -157,9 +209,11 @@ EOF
   # update unattended labels
   is_active_app unattended-upgrades && run_app unattended-upgrades
 
-  # update sury keys
+  # Fixed in version 1.10.5 
+  # update sury keys 
   wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-
+    
+  # Fixed in version 1.10.5
   # fix cron path
   is_active_app nc-backup-auto && run_app nc-backup-auto
   is_active_app nc-scan-auto && run_app nc-scan-auto
@@ -168,75 +222,25 @@ EOF
   is_active_app nc-previews-auto && run_app nc-previews-auto
   is_active_app nc-update-nc-apps-auto && run_app nc-update-nc-apps-auto
 
+  # Fixed in version 1.10.6
   # rework letsencrypt notification
   USER="$(jq -r '.params[2].value' "$CONFDIR"/letsencrypt.cfg)"
-  mkdir -p /etc/letsencrypt/renewal-hooks/deploy/
+  mkdir -p /etc/letsencrypt/renewal-hooks/deploy/  # Added in version 10.1.7
   cat > /etc/letsencrypt/renewal-hooks/deploy/ncp <<EOF
 #!/bin/bash
 /usr/local/bin/ncc notification:generate $USER "SSL renewal" -l "Your SSL certificate(s) \$RENEWED_DOMAINS has been renewed for another 90 days"
 EOF
   chmod +x /etc/letsencrypt/renewal-hooks/deploy/ncp
 
+  # Fixed in version 1.10.10
   # update nc-backup
   install_app nc-backup
-  install_app nc-restore
 
+  # Fixed in version 1.10.11
   # create UPDATES section
   updates_dir=/usr/local/bin/ncp/UPDATES
   mkdir -p "$updates_dir"
-  (
-  mv /usr/local/bin/ncp/{SYSTEM/unattended-upgrades.sh,CONFIG/nc-autoupdate-nc.sh,CONFIG/nc-autoupdate-ncp.sh,CONFIG/nc-update-nc-apps-auto.sh} "$updates_dir" || true
-  mv /usr/local/bin/ncp/TOOLS/{nc-update-nc-apps,nc-update-nextcloud,nc-update}.sh "$updates_dir" || true
-  mv /usr/local/bin/ncp/CONFIG/nc-notify-updates.sh "$updates_dir" || true
-  ) &>/dev/null
-
-  # armbian fix uu
-  rm -f /etc/apt/apt.conf.d/02-armbian-periodic
-
-  # switch back to the apt LE version
-  which letsencrypt &>/dev/null || install_app letsencrypt
-
-  # update launchers
-  apt-get update
-  apt-get install -y --no-install-recommends file
-  cat > /home/www/ncp-launcher.sh <<'EOF'
-#!/bin/bash
-grep -q '[\\&#;`|*?~<>^()[{}$&[:space:]]' <<< "$*" && exit 1
-source /usr/local/etc/library.sh
-run_app $1
-EOF
-  chmod 700 /home/www/ncp-launcher.sh
-
-  cat > /home/www/ncp-backup-launcher.sh <<'EOF'
-#!/bin/bash
-action="${1}"
-file="${2}"
-compressed="${3}"
-grep -q '[\\&#;`|*?~<>^()[{}$&]' <<< "$*" && exit 1
-[[ "$file" =~ ".." ]] && exit 1
-[[ "${action}" == "chksnp" ]] && {
-  btrfs subvolume show "$file" &>/dev/null || exit 1
-  exit
-}
-[[ "${action}" == "delsnp" ]] && {
-  btrfs subvolume delete "$file" || exit 1
-  exit
-}
-[[ -f "$file" ]] || exit 1
-[[ "$file" =~ ".tar" ]] || exit 1
-[[ "${action}" == "del" ]] && {
-  [[ "$(file "$file")" =~ "tar archive" ]] || [[ "$(file "$file")" =~ "gzip compressed data" ]] || exit 1
-  rm "$file" || exit 1
-  exit
-}
-[[ "$compressed" != "" ]] && pigz="-I pigz"
-tar $pigz -tf "$file" data &>/dev/null
-EOF
-  chmod 700 /home/www/ncp-backup-launcher.sh
-  sed -i 's|www-data ALL = NOPASSWD: .*|www-data ALL = NOPASSWD: /home/www/ncp-launcher.sh , /home/www/ncp-backup-launcher.sh, /sbin/halt, /sbin/reboot|' /etc/sudoers
-
-  # fix logrotate files
-  chmod 0444 /etc/logrotate.d/*
+  mv /usr/local/bin/ncp/{SYSTEM/unattended-upgrades.sh,CONFIG/nc-autoupdate-nc.sh,CONFIG/nc-autoupdate-ncp.sh,CONFIG/nc-update-nc-apps-auto.sh} "$updates_dir"
 
   # remove redundant opcache configuration. Leave until update bug is fixed -> https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=815968
   # Bug #416 reappeared after we moved to php7.2 and debian buster packages. (keep last)
