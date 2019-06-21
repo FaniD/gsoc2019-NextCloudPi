@@ -22,18 +22,15 @@ pgrep -f qemu-arm-static &>/dev/null && { echo "qemu-arm-static already running.
 ## preparations
 
 IMG=tmp/"$IMG"
-echo "===PRE PREPARE==="
+
 prepare_dirs                   # tmp cache output
-echo "===Prepare over==="
 download_raspbian "$IMG"
-echo "===PRE RESIZE==="
 resize_image      "$IMG" "$SIZE"
-echo "===PRE UPDATE==="
 update_boot_uuid  "$IMG"       # PARTUUID has changed after resize
-echo "===AFTER PREPARATIOS==="
+
 # make sure we don't accidentally disable first run wizard
 rm -f ncp-web/{wizard.cfg,ncp-web.cfg}
-echo "===PRE BUILD NCP==="
+
 ## BUILD NCP
 
 echo -e "\e[1m\n[ Build NCP ]\e[0m"
@@ -41,19 +38,17 @@ prepare_chroot_raspbian "$IMG"
 
 mkdir raspbian_root/tmp/ncp-build
 rsync -Aax --exclude-from .gitignore --exclude *.img --exclude *.bz2 . raspbian_root/tmp/ncp-build
-echo "====After rsync===="
+
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   sudo chroot raspbian_root /bin/bash <<'EOFCHROOT'
-    sudo locale-gen en_US.UTF-8
-    locale
     set -e
-    echo "=== GETS IN CHROOT ==="
+
     # mark the image as an image build
     touch /.ncp-image
 
     # update packages
     apt-get update
-    echo "=== UPDATE IS DONE === "
+
     # As of 10-2018 this upgrades raspi-kernel and messes up wifi and BTRFS
     #apt-get upgrade -y
     #apt-get dist-upgrade -y
@@ -68,17 +63,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     source etc/library.sh
     mkdir -p /usr/local/etc/ncp-config.d
     cp etc/ncp-config.d/nc-nextcloud.cfg /usr/local/etc/ncp-config.d/
-    echo "=== PRE LAMP ==="
     install_app    lamp.sh
-    echo "=== INSTALL NC ==="
     install_app    bin/ncp/CONFIG/nc-nextcloud.sh
     run_app_unsafe bin/ncp/CONFIG/nc-nextcloud.sh
-    echo "=== INSTALL NCP ==="
     install_app    ncp.sh
     run_app_unsafe bin/ncp/CONFIG/nc-init.sh
-    echo "====== PRE POST INST ========"
     run_app_unsafe post-inst.sh
-    echo "====== AFTER POST INST ====="
 
     # harden SSH further for Raspbian
     sed -i 's|^#PermitRootLogin .*|PermitRootLogin no|' /etc/ssh/sshd_config

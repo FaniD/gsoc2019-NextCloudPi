@@ -17,19 +17,19 @@ IMG=tmp/"$IMG"
 
 set -e
 source buildlib.sh
-echo "===Pre prepare==="
+
 prepare_dirs                   # tmp cache output
-echo "===Cloning armbian==="
+
 # get latest armbian
 [[ -d armbian ]] || git clone https://github.com/armbian/build armbian
 ( cd armbian && git pull --ff-only --tags )
-echo "===LATEST ARMBIAN IS HERE==="
+
 # add NCP modifications
 mkdir -p armbian/userpatches armbian/userpatches/overlay
 rm -f ncp-web/{wizard.cfg,ncp-web.cfg}
 cp armbian.sh armbian/userpatches/customize-image.sh
 rsync -Aax --delete --exclude-from .gitignore --exclude *.img --exclude *.bz2 . armbian/userpatches/overlay/
-echo "===AFTER RSYNC==="
+
 # GENERATE IMAGE
 
 # default parameters
@@ -53,18 +53,10 @@ EOF
 CONF="config-$BOARD".conf
 [[ -f "$CONF" ]] && cat "$CONF" >> armbian/config-docker-guest.conf
 
-echo "~~~~~~~~~"
-echo "pre-built"
-echo "~~~~~~~~~"
-
 # build
 rm -rf armbian/output/images
 armbian/compile.sh docker
 rm armbian/config-docker-guest.conf
-
-echo "~~~~~~~~~~~~~~~~~~~~~~"
-echo "Is the build finished?"
-echo "~~~~~~~~~~~~~~~~~~~~~~"
 
 # pack image
 mv armbian/output/images/Armbian*.img "$IMG"

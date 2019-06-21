@@ -15,21 +15,8 @@ jobs:
           - export LANG="en_US.UTF-8"
           - export LC_ALL="en_US.UTF-8"
           - export LC_CTYPE="en_US.UTF-8"
-            #a- sudo dpkg-reconfigure locales
-            ###################
-            #          - sudo dpkg-reconfigure locales # add the en_GB.UTF-8 locale and set as default
-            #          - export LANGUAGE=en_US.UTF-8 
-            #          - export LANG=en_US.UTF-8
-            #          - export LC_ALL=en_US.UTF-8
-            #          - sudo locale-gen en_US.UTF-8
-            #          - sudo update-locale en_US.UTF-8
-
-            #          - locale
-
-            #          - sudo cat /etc/locale.gen
-            #          - sudo cat /etc/default/locale
-            #          - sudo sed -i "" /etc/local.gen
           script:
+          - sed -i ",apt-get update,a ls /usr/bin | grep locale" build-SD-rpi.sh
           - sed -i "s/create_torrent/#create_torrent/" build-SD-rpi.sh
           - sed -i "s/upload_ftp/#upload_ftp/" build-SD-rpi.sh
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
@@ -44,7 +31,6 @@ jobs:
           - export LANG="en_US.UTF-8"
           - export LC_ALL="en_US.UTF-8"
           - export LC_CTYPE="en_US.UTF-8"
-
           - sed -i "s/create_torrent/#create_torrent/" build-SD-armbian.sh
           - sed -i "s/upload_ftp/#upload_ftp/" build-SD-armbian.sh
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
