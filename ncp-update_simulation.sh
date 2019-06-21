@@ -7,7 +7,7 @@
   while read line ; do
     updates_list[ $i ]="$line"
     (( i++ ))
-  done < <( ls -1 updates | sort -V )
+  done < <( ls -1 updates_simulator | sort -V )
 
  echo "Updates directory:"
  for i in ${updates_list[*]} ; do
@@ -18,14 +18,14 @@
   en=${#updates_list[@]} # don't mind the names here
   ena=$(expr $en - 1) # They're fixed in ncp-update
   latest_checkpoint=${updates_list[$ena]}
-  echo "====LATEST CHECKPOINT IS ${latest_checkpoint}==="
+  echo -e "\n===Latest Checkpoint is ${latest_checkpoint}==="
   # Compare current version with latest checkpoint to see if we need backwards updates
   MAJOR=$(echo ${latest_checkpoint} | cut -d'_' -f2 )
   MINOR=$(echo ${latest_checkpoint} | cut -d'_' -f3 )
   PATCH=$(echo ${latest_checkpoint} | cut -d'_' -f4 )
 
-  # Test statically
-  echo "Insert current version (example: 1.10.2)"
+  # Test dynamically - the input is only for testing
+  echo -e "\nInsert current version (example: 1.10.2)"
   read version
   
   MAJ=$( echo ${version} | cut -d. -f1 )
@@ -44,7 +44,7 @@
   fi
 
   if $BACKWARDS_UPDATES ; then
-    echo "===BACKWARDS UPDATES NEEDED==="
+    echo -e "\nBackwards Updates Needed"
     # Execute a series of updates of older versions
 
     # Binary search to find the right checkpoint to begin the updates
@@ -134,18 +134,18 @@
     done
 
 
-    echo "===Starting checkpoint is ${starting_checkpoint}: ${updates_list[${starting_checkpoint}]} ==="
+    echo -e "\n===Starting checkpoint is ${starting_checkpoint}: ${updates_list[${starting_checkpoint}]} ==="
     for(( i=${starting_checkpoint}; i<=${end_of_list}; i++)); do
       update_file=${updates_list[i]}
       #tag_update="v${MAJ}.${MIN}.${PAT}"
       #git checkout ${tag_update}
       #./updates/${update_file} || exit 1
 
-      echo "===Update ${update_file}==="
+      echo "Running ${update_file} . . ."
     done
   else
     # Up to date system updates
-    echo "No backwards updates. Just update.sh. "
+    echo "No backwards updates needed. Just update.sh. "
    # ./update.sh || exit 1
   fi
 
