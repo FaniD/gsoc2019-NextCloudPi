@@ -16,9 +16,10 @@ jobs:
           - export LC_ALL="en_US.UTF-8"
           - export LC_CTYPE="en_US.UTF-8"
           script:
-          - sed -i "/apt-get update/a cat /usr/bin/locale" build-SD-rpi.sh
-          - sed -i "/apt-get update/a update-locale LC_CTYPE=en_US.UTF-8" build-SD-rpi.sh
-          - sed -i "/apt-get update/a cat /usr/bin/locale" build-SD-rpi.sh
+          - sed -i "/apt-get update/a set | grep LANG" build-SD-rpi.sh
+                  #- sed -i "/apt-get update/a cat /usr/bin/locale" build-SD-rpi.sh
+                  #- sed -i "/apt-get update/a update-locale LC_CTYPE=en_US.UTF-8" build-SD-rpi.sh
+                  #- sed -i "/apt-get update/a cat /usr/bin/locale" build-SD-rpi.sh
           - sed -i "s/create_torrent/#create_torrent/" build-SD-rpi.sh
           - sed -i "s/upload_ftp/#upload_ftp/" build-SD-rpi.sh
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
