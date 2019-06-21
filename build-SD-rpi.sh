@@ -44,15 +44,16 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 #PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   #LANG="en_US.UTF-8" LC_CTYPE="en_US.UTF-8" LC_NUMERIC="en_US.UTF-8" LC_TIME="en_US.UTF-8" LC_COLLATE="en_US.UTF-8" LC_MONETARY="en_US.UTF-8" LC_MESSAGES="en_US.UTF-8" LC_PAPER="en_US.UTF-8" LC_NAME="en_US.UTF-8" LC_ADDRESS="en_US.UTF-8" LC_TELEPHONE="en_US.UTF-8" LC_MEASUREMENT="en_US.UTF-8" LC_IDENTIFICATION="en_US.UTF-8" LC_ALL="en_US.UTF-8" sudo chroot raspbian_root /bin/bash <<'EOFCHROOT'
     set -e
-    sudo apt-get install -y locales dialog  #If you don't talk en_US
     sudo locale-gen "en_US.UTF-8"  # or your preferred locale
-    sudo dpkg-reconfigure locales
     # mark the image as an image build
     touch /.ncp-image
 
     # update packages
     apt-get update
-
+    sudo update-locale LC_CTYPE="en_US.UTF-8"
+    sudo update-locale LC_TYPE="en_US.UTF-8"
+    sudo update-locale LANG="en_US.UTF-8"
+    sudo update-locale LANGUAGE="en_US.UTF-8"
     # As of 10-2018 this upgrades raspi-kernel and messes up wifi and BTRFS
     #apt-get upgrade -y
     #apt-get dist-upgrade -y
