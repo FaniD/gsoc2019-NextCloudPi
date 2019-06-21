@@ -44,6 +44,8 @@ rsync -Aax --exclude-from .gitignore --exclude *.img --exclude *.bz2 . raspbian_
 echo "====After rsync===="
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   sudo chroot raspbian_root /bin/bash <<'EOFCHROOT'
+    sudo locale-gen en_US.UTF-8
+    locale
     set -e
     echo "=== GETS IN CHROOT ==="
     # mark the image as an image build
