@@ -1,11 +1,31 @@
 
-[v1.12.3](https://github.com/nextcloud/nextcloudpi/commit/b797129) (2019-05-11) nc-scan-auto: recursive and home-only options
+[v1.13.2](https://github.com/nextcloud/nextcloudpi/commit/270ae92) (2019-06-03) fix upgrade
+
+[v1.13.1](https://github.com/nextcloud/nextcloudpi/commit/5de855f) (2019-06-01) ncp-web: avoid quotes in fields
+
+[v1.13.0](https://github.com/nextcloud/nextcloudpi/commit/86f14ae) (2019-06-01) upgrade to NC15.0.8
+
+[v1.12.10](https://github.com/nextcloud/nextcloudpi/commit/5924131) (2019-06-01) fail2ban: fix missing ufw filter
+
+[v1.12.9 ](https://github.com/nextcloud/nextcloudpi/commit/c71b37f) (2019-05-27) ncp-notify-updates: dont spam cron mail
+
+[v1.12.8 ](https://github.com/nextcloud/nextcloudpi/commit/bfdc475) (2019-05-25) docker: mount timezone
+
+[v1.12.7 ](https://github.com/nextcloud/nextcloudpi/commit/76137ed) (2019-05-25) ncp-app: bump to NC16
+
+[v1.12.6 ](https://github.com/nextcloud/nextcloudpi/commit/da09dc9) (2019-05-25) fail2ban: add a ufw jail and filter (dmaroulidis)
+
+[v1.12.5 ](https://github.com/nextcloud/nextcloudpi/commit/30c0f57) (2019-05-25) ncp-web: update config reference URL
+
+[v1.12.4 ](https://github.com/nextcloud/nextcloudpi/commit/c8d6222) (2019-05-26) ncp-web: Pt Translate (#907)
+
+[v1.12.3 ](https://github.com/nextcloud/nextcloudpi/commit/d938481) (2019-05-11) nc-scan-auto: recursive and home-only options
 
 [v1.12.2 ](https://github.com/nextcloud/nextcloudpi/commit/7589081) (2019-05-11) fix logrotate files
 
-[v1.12.1](https://github.com/nextcloud/nextcloudpi/commit/1be5ddd) (2019-05-01) Rename configuration variables into self-documenting ones (#889)
+[v1.12.1 ](https://github.com/nextcloud/nextcloudpi/commit/1be5ddd) (2019-05-01) Rename configuration variables into self-documenting ones (#889)
 
-[v1.12.0](https://github.com/nextcloud/nextcloudpi/commit/f34354c) (2019-04-29) ncp-web: add backups panel
+[v1.12.0 ](https://github.com/nextcloud/nextcloudpi/commit/f34354c) (2019-04-29) ncp-web: add backups panel
 
 [v1.11.5 ](https://github.com/nextcloud/nextcloudpi/commit/01cd421) (2019-04-29) letsencrypt: force renewal by default
 

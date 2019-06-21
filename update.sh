@@ -135,9 +135,16 @@ cp -r ncp-app /var/www/
 
   # for non docker images
   [[ ! -f /.docker-image ]] && {
+    cat > /etc/fail2ban/filter.d/ufwban.conf <<'EOF'
+[INCLUDES]
+before = common.conf
+[Definition]
+failregex = UFW BLOCK.* SRC=
+ignoreregex =
+EOF
     :
   }
-  
+
   # update to the latest version
   is_active_app nc-autoupdate-nc && run_app nc-autoupdate-nc
 
