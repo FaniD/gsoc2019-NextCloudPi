@@ -1,129 +1,49 @@
 stages:
-        - building_part1
-        - building_part2
-        - testing
-        - pushing_images
+        - building
 sudo: required
 language: generic
 dist: xenial
-branches:
-  only:
-        - gsoc2019-travis
-# Only build tags
-#if: tag IS present
-cache:
-  directories:
-        - docker_cached
 jobs:
   include:
-        - stage: building_part1
-
-          ### armhf Docker images
+        - stage: building
           env:
-              CACHE_NAME=ARMHF
+              JOB1
           install:
           - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
+          - sudo locale-gen en_US.UTF-8
+          - export LANGUAGE="en_US.UTF-8"
+          - export LANG="en_US.UTF-8"
+          - export LC_ALL="en_US.UTF-8"
+          - export LC_CTYPE="en_US.UTF-8"
+            #a- sudo dpkg-reconfigure locales
+            ###################
+            #          - sudo dpkg-reconfigure locales # add the en_GB.UTF-8 locale and set as default
+            #          - export LANGUAGE=en_US.UTF-8 
+            #          - export LANG=en_US.UTF-8
+            #          - export LC_ALL=en_US.UTF-8
+            #          - sudo locale-gen en_US.UTF-8
+            #          - sudo update-locale en_US.UTF-8
 
+            #          - locale
+
+            #          - sudo cat /etc/locale.gen
+            #          - sudo cat /etc/default/locale
+            #          - sudo sed -i "" /etc/local.gen
           script:
-                  #- sed -i "s,(install),install," etc/library.sh
-          - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-arm32v7:latest --pull --build-arg arch=arm32v7 --build-arg arch_qemu=arm > output
+          - sed -i "s/create_torrent/#create_torrent/" build-SD-rpi.sh
+          - sed -i "s/upload_ftp/#upload_ftp/" build-SD-rpi.sh
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
-            #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
-          - tail -f output &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-arm32v7:latest --build-arg arch=arm32v7 > output
-          - sed -i '/open_files_limit=65536/d' lamp.sh
-          - docker save --output docker_cached/debian-ncp-arm32v7.tar ownyourbits/debian-ncp-arm32v7:latest
-          - docker save --output docker_cached/lamp-arm32v7.tar ownyourbits/lamp-arm32v7:latest
-
-        - stage: building_part2
-
-          #Arms images usually take some time to get built alltogether so we split their building in 2 stages
-
-          ### armhf Docker images
+          - while sleep 9m; do echo "=====[ $SECONDS seconds, still building rpi image... ]====="; done &
+          - bash -x ./build-SD-rpi.sh
+        -         
           env:
-              CACHE_NAME=ARMHF
-          install:
-          - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
-
-          before_script:
-          - docker load --input docker_cached/lamp-arm32v7.tar
-            #- sed -i "s,(install),install," etc/library.sh
-
-          script: 
-          - touch output
-          - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloud/Dockerfile -t ownyourbits/nextcloud-arm32v7:latest --build-arg arch=arm32v7 > output
-          - DOCKER_BUILDKIT=1 docker build . -f docker/nextcloudpi/Dockerfile -t ownyourbits/nextcloudpi-arm32v7:latest --build-arg arch=arm32v7 > output
-          - docker save --output docker_cached/nextcloud-arm32v7.tar ownyourbits/nextcloud-arm32v7:latest
-          - docker save --output docker_cached/nextcloudpi-arm32v7.tar ownyourbits/nextcloudpi-arm32v7:latest
-
-        - stage: testing
-
-          ### armhf Docker images
-          env:
-              CACHE_NAME=ARMHF
-          install:
-          - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features      
-          - export MOZ_HEADLESS=1
-          - sudo apt-get install python3-pip
-          - sudo python3 -m pip install selenium
-          - wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz
-          - tar -xvzf geckodriver*
-          - chmod +x geckodriver
-          - export PATH=$PATH:$PWD
-            
-          before_script:
-          - docker load --input docker_cached/nextcloudpi-arm32v7.tar
-          - IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-          - docker run -d -p 4443:4443 -p 443:443 -p 80:80 -v ncdata:/data --name nextcloudpi ownyourbits/nextcloudpi-arm32v7:latest ${IP}
-          - docker logs -f nextcloudpi
-          script:
-          - sleep 60
-          - ./tests/activation_tests.py ${IP}
-          - sleep 60
-          - ./tests/nextcloud_tests.py ${IP}
-          - sleep 5
-          - ./tests/system_tests.py ncp@${IP} 
-
-        - stage: pushing_images
-          ### armhf Docker images
-          env:
-              CACHE_NAME=ARMHF
-
-          install:
-          - ./.travis/configure_docker.sh
-          - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features 
- 
-          before_script:
-          - docker load --input docker_cached/debian-ncp-armhf.tar
-          - docker load --input docker_cached/lamp-armhf.tar
-          - docker load --input docker_cached/nextcloud-armhf.tar
-          - docker load --input docker_cached/nextcloudpi-armhf.tar
-
-          - version=$(git describe --tags --always)
-          - version=${version%-*-*}
-
-          script:
-          - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-
-          - docker tag ownyourbits/debian-ncp-armhf:latest $DOCKER_USERNAME/debian-ncp-armhf:"${version}"
-          - docker tag ownyourbits/lamp-armhf:latest $DOCKER_USERNAME/lamp-armhf:"${version}"
-          - docker tag ownyourbits/nextcloud-armhf:latest $DOCKER_USERNAME/nextcloud-armhf:"${version}"
-          - docker tag ownyourbits/nextcloudpi-armhf:latest $DOCKER_USERNAME/nextcloudpi-armhf:"${version}"
-
-          - docker push $DOCKER_USERNAME/debian-ncp-armhf:"${version}"
-          - docker push $DOCKER_USERNAME/lamp-armhf:"${version}"
-          - docker push $DOCKER_USERNAME/nextcloud-armhf:"${version}"
-          - docker push $DOCKER_USERNAME/nextcloudpi-armhf:"${version}"
-
+              JOB2
+          script:  
+          - sed -i "s/create_torrent/#create_torrent/" build-SD-armbian.sh
+          - sed -i "s/upload_ftp/#upload_ftp/" build-SD-armbian.sh
+          - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
+          - while sleep 9m; do echo "=====[ $SECONDS seconds, still building armbian image... ]====="; done &
+          - bash -x ./build-SD-armbian.sh odroidxu4 OdroidHC2
+          
 notifications:
-        email: false
+  email: false
