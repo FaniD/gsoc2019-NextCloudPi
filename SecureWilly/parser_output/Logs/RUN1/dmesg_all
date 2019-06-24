@@ -1,0 +1,113 @@
+[10740.077095] docker0: port 1(vetha5c4a62) entered blocking state
+[10740.082508] docker0: port 1(vetha5c4a62) entered disabled state
+[10740.082614] device vetha5c4a62 entered promiscuous mode
+[10740.082645] audit: type=1700 audit(1561401298.721:415): dev=vetha5c4a62 prom=256 old_prom=0 auid=4294967295 uid=0 gid=0 ses=4294967295
+[10740.277590] audit: type=1325 audit(1561401298.921:416): table=nat family=2 entries=11
+[10740.281602] audit: type=1325 audit(1561401298.924:417): table=filter family=2 entries=23
+[10740.285027] audit: type=1325 audit(1561401298.928:418): table=nat family=2 entries=12
+[10740.290459] audit: type=1325 audit(1561401298.934:419): table=nat family=2 entries=13
+[10740.293516] audit: type=1325 audit(1561401298.938:420): table=filter family=2 entries=24
+[10740.296739] audit: type=1325 audit(1561401298.941:421): table=nat family=2 entries=14
+[10740.302341] audit: type=1325 audit(1561401298.944:422): table=nat family=2 entries=15
+[10741.146780] eth0: renamed from veth142051b
+[10741.170142] IPv6: ADDRCONF(NETDEV_CHANGE): vetha5c4a62: link becomes ready
+[10741.170273] docker0: port 1(vetha5c4a62) entered blocking state
+[10741.170279] docker0: port 1(vetha5c4a62) entered forwarding state
+[10744.892022] kauditd_printk_skb: 2 callbacks suppressed
+[10744.892034] audit: type=1123 audit(1561401303.534:425): pid=17677 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/" cmd=72656469732D736572766572202F6574632F72656469732F72656469732E636F6E66 terminal=pts/0 res=success'
+[10744.892151] audit: type=1110 audit(1561401303.534:426): pid=17677 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="redis" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10744.892286] audit: type=1105 audit(1561401303.534:427): pid=17677 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="redis" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10744.894574] audit: type=1106 audit(1561401303.538:428): pid=17677 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="redis" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10744.894597] audit: type=1104 audit(1561401303.538:429): pid=17677 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="redis" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10745.222202] audit: type=1123 audit(1561401303.864:430): pid=17809 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206D61696E74656E616E63653A696E7374616C6C202D2D6461746162617365206D7973716C202D2D64617461626173652D6E616D65206E657874636C6F7564202D2D64617461626173652D75736572206E6361646D696E202D2D64617461626173652D706173732064656661756C74202D2D61646D696E2D75736572206E6370202D2D61646D696E2D70617373206F776E796F757262697473 terminal=pts/0 res=success'
+[10745.222384] audit: type=1110 audit(1561401303.864:431): pid=17809 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10745.222568] audit: type=1105 audit(1561401303.864:432): pid=17809 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10776.516258] perf: interrupt took too long (3192 > 3137), lowering kernel.perf_event_max_sample_rate to 62400
+[10801.310052] audit: type=1106 audit(1561401359.954:433): pid=17809 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.310084] audit: type=1104 audit(1561401359.954:434): pid=17809 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.314886] audit: type=1123 audit(1561401359.958:435): pid=17864 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206261636B67726F756E643A63726F6E terminal=pts/0 res=success'
+[10801.315010] audit: type=1110 audit(1561401359.958:436): pid=17864 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.315121] audit: type=1105 audit(1561401359.958:437): pid=17864 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.575549] audit: type=1106 audit(1561401360.218:438): pid=17864 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.575577] audit: type=1104 audit(1561401360.218:439): pid=17864 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.584594] audit: type=1123 audit(1561401360.228:440): pid=17874 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F636320636F6E6669673A73797374656D3A7365742074656D706469726563746F7279202D2D76616C7565202F7661722F7777772F6E657874636C6F75642F646174612F746D70 terminal=pts/0 res=success'
+[10801.584735] audit: type=1110 audit(1561401360.228:441): pid=17874 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10801.584882] audit: type=1105 audit(1561401360.228:442): pid=17874 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10811.431611] kauditd_printk_skb: 60 callbacks suppressed
+[10811.431613] audit: type=1106 audit(1561401370.074:503): pid=18005 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10811.431671] audit: type=1104 audit(1561401370.074:504): pid=18005 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10811.437660] audit: type=1123 audit(1561401370.081:505): pid=18265 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206170703A696E7374616C6C20636F6E7461637473 terminal=pts/0 res=success'
+[10811.437796] audit: type=1110 audit(1561401370.081:506): pid=18265 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10811.437919] audit: type=1105 audit(1561401370.081:507): pid=18265 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10815.150646] audit: type=1123 audit(1561401373.794:508): pid=18288 uid=33 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/var/www/ncp-web" cmd=2F686F6D652F7777772F6E63702D6C61756E636865722E7368206E632D61646D696E terminal=? res=success'
+[10815.150759] audit: type=1110 audit(1561401373.794:509): pid=18288 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[10815.150870] audit: type=1105 audit(1561401373.794:510): pid=18288 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[10815.200992] audit: type=1123 audit(1561401373.844:511): pid=18312 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/var/www/ncp-web" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F636320757365723A726573657470617373776F7264202D2D70617373776F72642D66726F6D2D656E76206E6370 terminal=? res=success'
+[10815.201152] audit: type=1110 audit(1561401373.844:512): pid=18312 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[10816.491034] kauditd_printk_skb: 14 callbacks suppressed
+[10816.491036] audit: type=1106 audit(1561401375.134:527): pid=18337 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[10816.491042] audit: type=1104 audit(1561401375.134:528): pid=18337 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[10820.703438] audit: type=1106 audit(1561401379.348:529): pid=18265 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10820.703442] audit: type=1104 audit(1561401379.348:530): pid=18265 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10820.708087] audit: type=1123 audit(1561401379.351:531): pid=18537 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206170703A696E7374616C6C206E6F746573 terminal=pts/0 res=success'
+[10820.708200] audit: type=1110 audit(1561401379.351:532): pid=18537 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10820.708343] audit: type=1105 audit(1561401379.351:533): pid=18537 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10823.387166] audit: type=1100 audit(1561401382.031:534): pid=18786 uid=33 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:authentication acct="ncp" exe="/usr/sbin/pwauth" hostname=? addr=? terminal=? res=success'
+[10823.387353] audit: type=1101 audit(1561401382.031:535): pid=18786 uid=33 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:accounting acct="ncp" exe="/usr/sbin/pwauth" hostname=? addr=? terminal=? res=success'
+[10823.403892] audit: type=1100 audit(1561401382.048:536): pid=18787 uid=33 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:authentication acct="ncp" exe="/usr/sbin/pwauth" hostname=? addr=? terminal=? res=success'
+[10823.404038] audit: type=1101 audit(1561401382.048:537): pid=18787 uid=33 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:accounting acct="ncp" exe="/usr/sbin/pwauth" hostname=? addr=? terminal=? res=success'
+[10824.471203] audit: type=1106 audit(1561401383.114:538): pid=18537 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10824.471233] audit: type=1104 audit(1561401383.114:539): pid=18537 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10824.475866] audit: type=1123 audit(1561401383.118:540): pid=18918 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206170703A696E7374616C6C207461736B73 terminal=pts/0 res=success'
+[10824.476015] audit: type=1110 audit(1561401383.118:541): pid=18918 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10824.476216] audit: type=1105 audit(1561401383.121:542): pid=18918 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10828.187926] audit: type=1106 audit(1561401386.831:543): pid=18918 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10839.150237] kauditd_printk_skb: 4 callbacks suppressed
+[10839.150239] audit: type=1106 audit(1561401397.794:548): pid=18932 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10839.150267] audit: type=1104 audit(1561401397.794:549): pid=18932 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10839.155021] audit: type=1123 audit(1561401397.798:550): pid=18986 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206170703A696E7374616C6C207072657669657767656E657261746F72 terminal=pts/0 res=success'
+[10839.155149] audit: type=1110 audit(1561401397.798:551): pid=18986 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10839.155289] audit: type=1105 audit(1561401397.798:552): pid=18986 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10841.502948] audit: type=1106 audit(1561401400.148:553): pid=18986 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10841.502953] audit: type=1104 audit(1561401400.148:554): pid=18986 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10841.507209] audit: type=1123 audit(1561401400.151:555): pid=18994 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/data/nextcloud" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F6363206170703A656E61626C652063616C656E646172 terminal=pts/0 res=success'
+[10841.507311] audit: type=1110 audit(1561401400.151:556): pid=18994 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10841.507448] audit: type=1105 audit(1561401400.151:557): pid=18994 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.683847] kauditd_printk_skb: 55 callbacks suppressed
+[10844.683859] audit: type=1106 audit(1561401403.328:613): pid=19061 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.683883] audit: type=1104 audit(1561401403.328:614): pid=19061 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.705507] audit: type=1123 audit(1561401403.348:615): pid=19082 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F636320636F6E6669673A73797374656D3A73657420747275737465645F646F6D61696E732031202D2D76616C75653D3137322E31372E302E32 terminal=pts/0 res=success'
+[10844.705617] audit: type=1110 audit(1561401403.348:616): pid=19082 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.705730] audit: type=1105 audit(1561401403.348:617): pid=19082 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.874602] audit: type=1106 audit(1561401403.518:618): pid=19082 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.874620] audit: type=1104 audit(1561401403.518:619): pid=19082 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.879324] audit: type=1123 audit(1561401403.521:620): pid=19088 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='cwd="/" cmd=706870202F7661722F7777772F6E657874636C6F75642F6F636320636F6E6669673A73797374656D3A73657420747275737465645F646F6D61696E732036202D2D76616C75653D3139322E3136382E312E313031 terminal=pts/0 res=success'
+[10844.879452] audit: type=1110 audit(1561401403.524:621): pid=19088 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10844.879570] audit: type=1105 audit(1561401403.524:622): pid=19088 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="www-data" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/console res=success'
+[10850.368974] kauditd_printk_skb: 14 callbacks suppressed
+[10850.368977] audit: type=1100 audit(1561401409.011:637): pid=19525 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:authentication acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.369249] audit: type=1101 audit(1561401409.011:638): pid=19525 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:accounting acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.369768] audit: type=1103 audit(1561401409.014:639): pid=19525 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.370291] audit: type=1105 audit(1561401409.014:640): pid=19525 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.373126] audit: type=1106 audit(1561401409.018:641): pid=19525 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_close acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.373157] audit: type=1104 audit(1561401409.018:642): pid=19525 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.379931] audit: type=1100 audit(1561401409.024:643): pid=19531 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:authentication acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.380119] audit: type=1101 audit(1561401409.024:644): pid=19531 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:accounting acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.380447] audit: type=1103 audit(1561401409.024:645): pid=19531 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:setcred acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10850.380963] audit: type=1105 audit(1561401409.024:646): pid=19531 uid=0 auid=4294967295 ses=4294967295 subj==unconfined msg='op=PAM:session_open acct="redis" exe="/bin/su" hostname=? addr=? terminal=/dev/pts/0 res=success'
+[10902.104720] kauditd_printk_skb: 2 callbacks suppressed
+[10902.104722] audit: type=1325 audit(1561401460.748:649): table=nat family=2 entries=17
+[10902.108587] audit: type=1325 audit(1561401460.751:650): table=filter family=2 entries=26
+[10902.112678] audit: type=1325 audit(1561401460.754:651): table=nat family=2 entries=16
+[10902.115749] audit: type=1325 audit(1561401460.758:652): table=nat family=2 entries=15
+[10902.118328] audit: type=1325 audit(1561401460.761:653): table=filter family=2 entries=25
+[10902.120670] audit: type=1325 audit(1561401460.764:654): table=nat family=2 entries=14
+[10902.123705] audit: type=1325 audit(1561401460.768:655): table=nat family=2 entries=13
+[10902.126016] audit: type=1325 audit(1561401460.768:656): table=filter family=2 entries=24
+[10902.128699] audit: type=1325 audit(1561401460.771:657): table=nat family=2 entries=12
+[10902.220529] docker0: port 1(vetha5c4a62) entered disabled state
+[10902.220621] veth142051b: renamed from eth0
+[10902.328628] docker0: port 1(vetha5c4a62) entered disabled state
+[10902.331878] device vetha5c4a62 left promiscuous mode
+[10902.331897] docker0: port 1(vetha5c4a62) entered disabled state
+[10902.331911] audit: type=1700 audit(1561401460.971:658): dev=vetha5c4a62 prom=0 old_prom=256 auid=4294967295 uid=0 gid=0 ses=4294967295

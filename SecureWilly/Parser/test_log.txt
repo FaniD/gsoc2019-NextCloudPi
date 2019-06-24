@@ -1,8 +1,0 @@
-[activation tests]
-activation opens = ok
-activation click = ok
-activation ends = error
-
-[nextcloud tests]
-nextcloud page = error
-
