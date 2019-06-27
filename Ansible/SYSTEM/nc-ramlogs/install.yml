@@ -16,5 +16,7 @@
 
     - name: one of the dirs exists
       shell: echo 'log2ram detected, not installing'
-      when: (log_hdd.stat.exists and log_hdd.stat.isdir) or (hdd_log.stat.exists and hdd_log.stat.isdir)
       meta: end_play
+      when: (log_hdd.stat.exists and log_hdd.stat.isdir) or (hdd_log.stat.exists and hdd_log.stat.isdir)
+
+    - command: chdir=/tmp curl -Lo log2ram.tar.gz https://github.com/azlux/log2ram/archive/master.tar.gz
