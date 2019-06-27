@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
 
-ARG arch=arm32v7
+ARG arch=armhf
 
 FROM ownyourbits/nextcloud-${arch}
 

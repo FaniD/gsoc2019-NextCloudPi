@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
 
-ARG arch=arm32v7
+ARG arch=armhf
 
 FROM ownyourbits/lamp-${arch}
 
@@ -30,10 +30,7 @@ mv /var/www/nextcloud /data-ro/nextcloud; \
 ln -s /data-ro/nextcloud /var/www/nextcloud; \
 
 # stop mysqld
-/etc/init.d/mysql stop; \
-mysqld stop; \
-
-#mysqladmin -u root shutdown; \
+mysqladmin -u root shutdown; \
 
 # package cleanup 
 apt-get autoremove -y; \
