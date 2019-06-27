@@ -4,4 +4,19 @@
 - hosts: local
   connection: local
   tasks:
+    - name: existence of /var/log.hdd
+      stat:
+        path: /var/log.hdd
+      register: log_hdd
 
+    - name: existence of /var/hdd.log
+      stat:
+        path: /var/hdd.log
+      register: hdd_log
+
+    - name: one of the dirs exists
+      shell: echo 'log2ram detected, not installing'
+      register: output
+
+    - debug: msg="the echo was {{ output.stdout }}"
+      when: (log_hdd.stat.exists and log_hdd.stat.isdir) or (hdd_log.stat.exists and hdd_log.stat.isdir)
