@@ -1,0 +1,30 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_active:  "{{ lookup('env','ACTIVE') }}"
+  tasks:
+    - name: Stop and disable log2ram if active
+      systemd: 
+      name: log2ram
+      status: stopped
+      enabled: no
+      when: local_active != "yes"
+    - shell: echo "Logs in SD. Reboot to take effect"
+      when: local_active != "yes"
+    - meta: end_play
+      when: local_active != "yes"
+    
+    - name: existence of /lib/systemd/system/armbian-ramlog.service
+      stat:
+        path: /lib/systemd/system/armbian-ramlog.service
+      register: arm-ramlog-service
+      ######
+      #fix next part
+      #####
+    - shell: echo 'log2ram detected, not installing'
+      meta: end_play
+      when: (log_hdd.stat.exists and log_hdd.stat.isdir) or (hdd_log.stat.exists and hdd_log.stat.isdir)
+
