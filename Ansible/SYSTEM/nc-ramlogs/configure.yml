@@ -21,10 +21,21 @@
       stat:
         path: /lib/systemd/system/armbian-ramlog.service
       register: arm-ramlog-service
-      ######
-      #fix next part
-      #####
-    - shell: echo 'log2ram detected, not installing'
-      meta: end_play
-      when: (log_hdd.stat.exists and log_hdd.stat.isdir) or (hdd_log.stat.exists and hdd_log.stat.isdir)
 
+    - systemd:
+      name: armbian-ramlog
+      enabled: yes
+      status: started
+      when: arm-ramlog-service.stat.exists
+
+    - shell: echo "Logs in RAM. Reboot to take effect"
+      when: arm-ramlog-service.stat.exists
+
+    - meta: end_play
+      when: arm-ramlog-service.stat.exists
+
+    - systemd:
+      name: log2ram
+      enabled: yes
+      status: started
+ 
