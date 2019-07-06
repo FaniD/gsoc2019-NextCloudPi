@@ -1,0 +1,17 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+    - shell: swapon -s | sed -n 2p | awk '{ print $1 }'
+      register: dir
+
+    - register: activeness1
+      when: dir != ""
+
+    - register: activeness2
+      when: dir != "/var/swap"
+
+    - register: active
+      when: activeness1 and activeness2
