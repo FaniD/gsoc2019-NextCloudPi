@@ -5,7 +5,7 @@
 machines=$(docker-machine ls | wc -l)
 machines=$(( machines - 1 ))
 num_workers="${1:-$machines}"
-echo "${num_workers}"
+
 for((i=1; i<="$num_workers"; i++)); do
   docker-machine kill worker${i}
   docker-machine rm worker${i} --force

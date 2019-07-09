@@ -1,7 +1,7 @@
 version: '3'
 services:
   nextcloudpi:
-    image: localhost:5001/ownyourbits/nextcloudpi-x86
+    image: ownyourbits/nextcloudpi-x86
     command: "${IP}"
     ports:
      - "80:80"
@@ -11,6 +11,10 @@ services:
      - ncdata:/data
      - /etc/localtime:/etc/localtime:ro
     container_name: nextcloudpi
-
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        
 volumes:
   ncdata:
