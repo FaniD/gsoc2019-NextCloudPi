@@ -1,0 +1,47 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_swap:  "{{ lookup('env','SWAPFILE') }}"
+  tasks:
+    - shell: lsblk -ln | grep "^sd[[:alpha:]].*disk" | awk '{ print $1 }'
+      register: drives
+
+
+
+
+    - shell: dirname "$SWAPFILE" 
+      register: dstdir
+
+    - shell: echo "nothing to do"
+      when: orig.stdout == local_swap
+
+    - meta: end_play
+      when orig.stdout == local_swap
+
+    - stat:
+        path: {{ local_swap }}
+      register: sw_file
+
+    - shell: echo "$SWAPFILE is a directory. Abort"
+      when: (sw_file.stat.exists and sw_file.stat.isdir)
+
+    - fail:
+        msg: Swapfile is a directory. Abort
+      when: (sw_file.stat.exists and sw_file.stat.isdir)
+
+    - stat:
+        path: dstdir.stdout
+      register: dst
+
+    - shell: echo "$DSTDIR doesn't exist. Abort"
+      when: not (dst.stat.exists and dst.stat.isdir)
+
+    - fail:
+        msg: Dstdir doesn't exist. Abort
+      when: not (dst.stat.exists and dst.stat.isdir)
+
+     
+
