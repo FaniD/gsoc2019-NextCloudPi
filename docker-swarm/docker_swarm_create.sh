@@ -37,10 +37,25 @@ read num_workers
 
 worker_join_token=$(docker swarm join-token -q worker)
 
+# Setup GlusterFS
+
+mkdir /etc/glusterfs
+mkdir /var/lib/glusterd
+mkdir /var/log/glusterfs
+mkdir -p /bricks/brick1/gv0
+mkdir /datavol
+docker network create -d overlay --attachable netgfs
+
+mount --bind /datavol /datavol
+mount --make-shared /datavol
+
 # Create Docker machines with Virtual Box as driver
+ip_list=[]
 for(( i=1; i<="$num_workers"; i++)); do
   docker-machine create --driver virtualbox worker${i}
   docker-machine ssh worker${i} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
+  docker-machine ip worker${i}
+  docker-machine ssh worker${i} "docker run --restart=always --name gfsc${i} -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/datavol,target=/datavol,bind-propagation=rshared -d --privileged=true --net=netgfs -v /dev/:/dev gluster/gluster-centos"
 done
 
 # Service ncp start - leader's IP
