@@ -32,6 +32,7 @@ docker node update --availability drain ${leader_name}
 
 echo "Enter number of workers:"
 read num_workers
+replicas=((num_workers + 1))
 
 # Setup Worker machines/nodes
 
@@ -43,20 +44,33 @@ mkdir /etc/glusterfs
 mkdir /var/lib/glusterd
 mkdir /var/log/glusterfs
 mkdir -p /bricks/brick1/gv0
-mkdir /datavol
+mkdir /data
 docker network create -d overlay --attachable netgfs
 
-mount --bind /datavol /datavol
-mount --make-shared /datavol
+mount --bind /data /data
+mount --make-shared /data
+
+docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/data,target=/data,bind-propagation=rshared -d --privileged=true --net=netgfs -v /dev/:/dev gluster/gluster-centos
 
 # Create Docker machines with Virtual Box as driver
-ip_list=[]
+replicas_gfs=""
 for(( i=1; i<="$num_workers"; i++)); do
   docker-machine create --driver virtualbox worker${i}
   docker-machine ssh worker${i} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
-  docker-machine ip worker${i}
-  docker-machine ssh worker${i} "docker run --restart=always --name gfsc${i} -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/datavol,target=/datavol,bind-propagation=rshared -d --privileged=true --net=netgfs -v /dev/:/dev gluster/gluster-centos"
+#  docker-machine ip worker${i}
+  docker-machine ssh worker${i} "sudo mkdir /data"
+  docker-machine ssh worker${i} "sudo mount --bind /data /data"
+  docker-machine ssh worker${i} "sudo mount --make-shared /data"
+  docker-machine ssh worker${i} "docker run --restart=always --name gfsc${i} -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/data,target=/data,bind-propagation=rshared -d --privileged=true --net=netgfs -v /dev/:/dev gluster/gluster-centos"
+
+  # Connect node's gluster container to the gluster cluster
+  docker exec -it gfsc0 gluster peer probe gfsc${i}
+  replicas_gfs+="gfsc${i}:/bricks/brick1/gv0 "
 done
+
+# Create replicated volume
+gluster volume create gv0 replica ${replicas} ${replicas_gfs}
+gluster volume start gv0
 
 # Service ncp start - leader's IP
 #machine_IP=$(docker-machine ip worker1)
