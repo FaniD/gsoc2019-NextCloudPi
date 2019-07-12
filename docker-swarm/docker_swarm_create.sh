@@ -69,8 +69,9 @@ for(( i=1; i<="$num_workers"; i++)); do
 done
 
 # Create replicated volume
-gluster volume create gv0 replica ${replicas} ${replicas_gfs}
-gluster volume start gv0
+docker exec -it gfsc0 gluster volume create gv0 replica ${replicas} ${replicas_gfs}
+docker exec -it gfsc0 gluster volume start gv0
+docker exec -it gfsc0 mount.glusterfs gfsc0:/gv0 /data
 
 # Service ncp start - leader's IP
 #machine_IP=$(docker-machine ip worker1)
@@ -78,4 +79,5 @@ export IP=${leader_IP}
 docker deploy --compose-file ../docker-compose.yml NCP
 
 # Services
-docker service scale NCP_nextcloudpi=${num_workers}
+#docker service scale NCP_nextcloudpi=${num_workers}
+docker service scale NCP_nextcloudpi=${replicas}
