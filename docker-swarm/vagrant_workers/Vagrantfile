@@ -12,14 +12,15 @@
 
 Vagrant.configure("2") do |config|
 
-  vmname = "workerX-NCP"
+  vmname = "workerX"
 
   #Box settings
-  config.vm.box = "debian/stretch64"
+  #config.vm.box = "debian/stretch64"
+  config.vm.box = "ubuntu/xenial64"
   config.vm.box_check_update = false
 
   #VM settings
-  config.vm.hostname = "workerX-ncp-vm"
+  config.vm.hostname = "workerX"
 
   #Networking
 
@@ -29,54 +30,26 @@ Vagrant.configure("2") do |config|
   #Provider settings
   config.vm.provider "virtualbox" do |v|
     #Resources
-    v.memory = 4096
-    v.cpus = 4
+    v.memory = 2000
+    v.cpus = 2
 
     #VM name
-    v.name = "workerX-NextCloudPi"
+    v.name = "workerX"
 
   end
 
 
-  config.vm.synced_folder '.', '/vagrant'
+  config.vm.synced_folder '.', '/vagrant', disabled: true
 
   $script = <<-SHELL
     sudo su
-    BRANCH=master
-    #BRANCH=gsoc2019-devel  # uncomment to install devel
-    apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
 
-    # Install docker
+    # Update docker
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
-    echo $'{
-      "experimental": true,
-      "storage-driver": "overlay2"
-    }' | sudo tee /etc/docker/daemon.json
-    sudo service docker restart
-
-
-    # indicate that this will be an image build
-    touch /.ncp-image
-
-    # install from the official repo
-    git clone -b "$BRANCH" https://github.com/nextcloud/nextcloudpi.git /tmp/nextcloudpi
-    cd /tmp/nextcloudpi
-
-    # uncomment to install devel
-    #sed -i 's|^BRANCH=gsoc2019-master|BRANCH=gsoc2019-devel|' install.sh ncp.sh
-
-    #Do alltogether so that the install.sh won't fail as it does sometimes when run alone
-    bash install.sh && source etc/library.sh && run_app_unsafe post-inst.sh && cd - && systemctl disable sshd && poweroff
-
-    # cleanup
-#    source etc/library.sh
-#    run_app_unsafe post-inst.sh
-#    cd -
-#    rm -r /tmp/nextcloudpi
-#    systemctl disable sshd
-#    poweroff
+    
+    sudo apt-get install -y vim
+    systemctl enable sshd
   SHELL
 
   # Provision the VM
