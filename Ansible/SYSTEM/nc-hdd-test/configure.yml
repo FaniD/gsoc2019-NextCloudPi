@@ -12,10 +12,8 @@
       when: "{{ drives.stdout_lines|length == 0}}"
     - meta: end_play
       when: "{{ drives.stdout_lines|length == 0}}"
-    - shell: local type="" && smartctl -d test /dev/{{ item }} &>/dev/null || { smartctl -d sat -i /dev/{{ item }} $>/dev/null || { echo "couldnt detect device type"; return 1; } type="-d sat" }
-      with_items:
+    - command: {{ item.1 }}
+      with_nested:
         - "{{ drives.stdout_lines }}"
-
-
-     
+        - [ 'local type=""', 'smartctl -d test /dev/{{ item.0 }} &>/dev/null || { smartctl -d sat -i /dev/{{ item.0 }} $>/dev/null || { echo "couldnt detect device type"; return 1; } type="-d sat" }', 'smartctl --smart=on /dev/{{ item.0 }}' ]
 
