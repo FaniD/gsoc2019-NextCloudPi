@@ -17,3 +17,13 @@ visualizer_id=$(cut -d' ' -f1 <<<"$visualizer")
 docker kill ${visualizer_id}
 
 docker swarm leave --force
+
+docker network rm netgfsc
+
+sudo rm -r /etc/glusterfs
+sudo rm -r /var/lib/glusterd
+sudo rm -r /var/log/glusterfs
+
+sudo rm -r /bricks/brick1/gv0
+
+docker volume rm NCP_nextcloudpi
