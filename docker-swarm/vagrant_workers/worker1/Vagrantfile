@@ -12,19 +12,19 @@
 
 Vagrant.configure("2") do |config|
 
-  vmname = "workerX"
+  vmname = "worker1"
 
   #Box settings
   config.vm.box = "ubuntu/xenial64"
   config.vm.box_check_update = false
 
   #VM settings
-  config.vm.hostname = "workerX"
+  config.vm.hostname = "worker1"
 
   #Networking
 
   #Public IP
-  config.vm.network "public_network", bridge: "wlp4s0", ip: "192.168.1.21"
+  config.vm.network "public_network", bridge: "wlp4s0", ip: "192.168.1.1"
 
   #Provider settings
   config.vm.provider "virtualbox" do |v|
@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
     v.cpus = 2
 
     #VM name
-    v.name = "workerX"
+    v.name = "worker1"
 
   end
 

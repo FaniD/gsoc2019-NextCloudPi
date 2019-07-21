@@ -3,7 +3,7 @@
 leader_ip=$1
 
 workers=$(ls vagrant_workers | wc -l)
-new_id=$((vagrant_workers)) # +1 already counted by Vagrantfile
+new_id=$((workers)) # +1 already counted by Vagrantfile
 mkdir vagrant_workers/worker${new_id}
 cp vagrant_workers/Vagrantfile vagrant_workers/worker${new_id}
 
