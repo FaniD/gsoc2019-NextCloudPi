@@ -16,10 +16,10 @@
       when: orig.stdout == local_swap
 
     - meta: end_play
-      when orig.stdout == local_swap
+      when: orig.stdout == local_swap
 
     - stat:
-        path: {{ local_swap }}
+        path: "{{ local_swap }}"
       register: sw_file
 
     - shell: echo "$SWAPFILE is a directory. Abort"
@@ -30,7 +30,7 @@
       when: (sw_file.stat.exists and sw_file.stat.isdir)
 
     - stat:
-        path: dstdir.stdout
+        path: "{{ dstdir.stdout }}"
       register: dst
 
     - shell: echo "$DSTDIR doesn't exist. Abort"
