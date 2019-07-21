@@ -29,8 +29,8 @@ Vagrant.configure("2") do |config|
   #Provider settings
   config.vm.provider "virtualbox" do |v|
     #Resources
-    v.memory = 2000
-    v.cpus = 2
+    v.memory = 1000
+    v.cpus = 1
 
     #VM name
     v.name = "workerX"
@@ -38,7 +38,7 @@ Vagrant.configure("2") do |config|
   end
 
 
-  config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.vm.synced_folder '.', '/vagrant', disabled: false
 
   $script = <<-SHELL
     sudo su
@@ -49,6 +49,7 @@ Vagrant.configure("2") do |config|
     
     sudo apt-get install -y vim
     systemctl enable sshd
+    sudo mv /vagrant/gluster_setup.sh .
   SHELL
 
   # Provision the VM

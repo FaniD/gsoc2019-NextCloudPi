@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="2"
+test="8"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -72,11 +72,20 @@ docker service scale NCP${test}_nextcloudpi=${num_workers}
 
 #docker node update --availability active ${leader_name}
 
+# Message to workers to create their gluster container
+echo -e "\nMake sure to run the following commands on every worker node:"
+echo -e "In the last command, gfsc<X> should be replaced with the id number of each worker\n"
+echo -e "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data /var/lib/docker/volumes/NCP${test}_ncdata/_data"
+echo -e "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data"
+echo -e "docker run --restart=always --name gfsc<X> -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
+echo -e "\nType ready when all workers are running gluster container"
+read ready
+
 replicas_gfs=""
 for(( i=1; i<="$num_workers"; i++)); do
-  docker-machine ssh worker${i} "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data /var/lib/docker/volumes/NCP${test}_ncdata/_data"
-  docker-machine ssh worker${i} "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data"
-  docker-machine ssh worker${i} "docker run --restart=always --name gfsc${i} -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
+#  docker-machine ssh worker${i} "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data /var/lib/docker/volumes/NCP${test}_ncdata/_data"
+#  docker-machine ssh worker${i} "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data"
+#  docker-machine ssh worker${i} "docker run --restart=always --name gfsc${i} -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
 
   # Connect node's gluster container to the gluster cluster
   docker exec -it gfsc0 gluster peer probe gfsc${i}
