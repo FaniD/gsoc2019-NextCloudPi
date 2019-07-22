@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="8"
+test="10"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -32,6 +32,12 @@ docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dock
 echo "Enter number of workers:"
 read num_workers
 replicas=$((num_workers + 1))
+
+# Create vagrant workers VMs option
+for(( i=1; i<="$num_workers"; i++)); do
+  ./new_worker_vagrant.sh ${leader_IP}
+  cd vagrant_workers/worker${i} && vagrant up && cd ../..
+done
 
 # Setup Worker machines/nodes
 
@@ -72,6 +78,8 @@ docker service scale NCP${test}_nextcloudpi=${num_workers}
 
 #docker node update --availability active ${leader_name}
 
+
+# Vagrant option can use the provided script gluster_setup <no_test>
 # Message to workers to create their gluster container
 echo -e "\nMake sure to run the following commands on every worker node:"
 echo -e "In the last command, gfsc<X> should be replaced with the id number of each worker\n"
@@ -83,17 +91,13 @@ read ready
 
 replicas_gfs=""
 for(( i=1; i<="$num_workers"; i++)); do
-#  docker-machine ssh worker${i} "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data /var/lib/docker/volumes/NCP${test}_ncdata/_data"
-#  docker-machine ssh worker${i} "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data"
-#  docker-machine ssh worker${i} "docker run --restart=always --name gfsc${i} -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
-
   # Connect node's gluster container to the gluster cluster
   docker exec -it gfsc0 gluster peer probe gfsc${i}
   replicas_gfs+="gfsc${i}:/bricks/brick1/gv0 "
 done
 
 # Create replicated volume
-docker exec -it gfsc0 gluster volume create gv0 replica ${replicas} ${replicas_gfs}
+docker exec -it gfsc0 gluster volume create gv0 replica ${replicas} gfsc0:/bricks/brick1/gv0 ${replicas_gfs}
 docker exec -it gfsc0 gluster volume start gv0
 docker exec -it gfsc0 mount.glusterfs gfsc0:/gv0 $(pwd)/swstorage #/var/lib/docker/volumes/NCP${test}_ncdata/_data
 
