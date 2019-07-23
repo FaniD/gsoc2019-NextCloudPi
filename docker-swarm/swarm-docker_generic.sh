@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="10"
+test="13"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -60,23 +60,19 @@ sudo mount --make-shared ./swstorage
 
 docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
 
-# Create Docker machines with Virtual Box as driver
-#for(( i=1; i<="$num_workers"; i++)); do
-#  docker-machine create --driver virtualbox worker${i}
-
 echo -e "\n\nPlease make sure to run the following command on every machine you want to add to the swarm:\n"
 echo -e "docker swarm join --token ${worker_join_token} ${leader_IP}:2377\n\n"
 echo "Type ready when every node is added . . ."
 read ready 
 
 # Set manager to drain so that ncp replicas are distributed to workers
-#docker node update --availability drain ${leader_name}
+docker node update --availability drain ${leader_name}
 
 # Service ncp start - leader's IP
 docker deploy --compose-file ../docker-compose.yml NCP${test}
 docker service scale NCP${test}_nextcloudpi=${num_workers}
 
-#docker node update --availability active ${leader_name}
+docker node update --availability active ${leader_name}
 
 
 # Vagrant option can use the provided script gluster_setup <no_test>
