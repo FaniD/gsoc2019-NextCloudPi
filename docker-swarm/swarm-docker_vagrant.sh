@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="19"
+test="24"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -63,17 +63,29 @@ docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/e
 echo -e "\n\nPlease make sure to run the following command on every machine you want to add to the swarm:\n"
 echo -e "docker swarm join --token ${worker_join_token} ${leader_IP}:2377\n\n"
 echo "Type ready when every node is added . . ."
-read ready 
+while true; do
+  read ready
+  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+    break
+  fi
+  echo -e "Type ready when every node is added . . ."
+done
 
 # Vagrant option can use the provided script gluster_setup <no_test>
 # Message to workers to create their gluster container
-echo -e "\nMake sure to run the following commands on every worker node:"
+echo -e "\nMake sure to run the following commands on every worker node (or execure gluster_setup.sh):"
 echo -e "In the last command, gfsc<X> should be replaced with the id number of each worker\n"
 echo -e "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data /var/lib/docker/volumes/NCP${test}_ncdata/_data"
 echo -e "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data"
 echo -e "docker run --restart=always --name gfsc<X> -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
-echo -e "\nType ready when all workers are running gluster container"
-read ready
+echo -e "\nType ready when all workers are running gluster container . . ."
+while true; do
+  read ready
+  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+    break
+  fi
+  echo -e "Type ready when all workers are running gluster container . . ."
+done
 
 replicas_gfs=""
 for(( i=1; i<="$num_workers"; i++)); do
@@ -87,8 +99,15 @@ docker exec -it gfsc0 gluster volume create gv0 replica ${replicas} gfsc0:/brick
 docker exec -it gfsc0 gluster volume start gv0
 docker exec -it gfsc0 mount.glusterfs gfsc0:/gv0 $(pwd)/swstorage
 
-echo -e "Do the same for the rest of nodes, then type ready"
-read ready
+echo -e "On every node execute the following command to mount the gluster volume (or execute gluster_volume.sh), then type ready\n"
+echo -e "docker exec -it gfsc<X> mount.glusterfs gfsc<X>:/gv0 /var/lib/docker/volumes/NCP${test}_ncdata/_data\n"
+while true; do
+  read ready
+  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+    break
+  fi
+  echo -e "Type ready when volume is mounted on every gluster node . . ."
+done
 
 # Set manager to drain so that ncp replicas are distributed to workers
 docker node update --availability drain ${leader_name}

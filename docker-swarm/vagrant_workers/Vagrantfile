@@ -46,9 +46,11 @@ Vagrant.configure("2") do |config|
     # Update docker
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
-    
+    sudo usermod -aG docker vagrant
+
     sudo apt-get install -y vim
     systemctl enable sshd
+  
     sudo mv /vagrant/gluster_setup.sh .
     sudo mv /vagrant/gluster_volume.sh .
   SHELL
