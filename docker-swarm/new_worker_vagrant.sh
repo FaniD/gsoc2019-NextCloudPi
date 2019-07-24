@@ -13,4 +13,5 @@ new_ip=$((base_ip + new_id))
 sed -i "s,192.168.1.21,192.168.1.${new_ip}," vagrant_workers/worker${new_id}/Vagrantfile
 
 sudo cp gluster_setup.sh vagrant_workers/worker${new_id}/
+sudo cp gluster_volume.sh vagrant_workers/worker${new_id}/
 #vagrant up
