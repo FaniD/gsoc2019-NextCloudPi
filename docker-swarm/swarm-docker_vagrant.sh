@@ -1,11 +1,12 @@
 #!/bin/bash
 
-test="28"
+test=""
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
 # fix it to identify if there are multiple IPs on host
-echo "Specify Leader's IP address. Type any to pick any listening address to the system:"
+echo -e "================================================\n"
+echo -e "Specify leader's IP address or type 'any' to pick\nany listening address of the system:"
 read leader
 if [[ $leader == "any" ]]; then 
   docker node ls 2> /dev/null | grep "Leader"
@@ -20,32 +21,27 @@ fi
 leader_name=$(hostname)
 
 # Initialize swarm system with host as Leader (manager)
+echo -e "\nCreating swarm system . . ."
 docker swarm init --advertise-addr ${leader_IP}
 
 # Visualizer option (localhost:5000)
+echo -e "Run visualizer (localhost:5000) . . ."
 docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
 
 # Registry option
 #docker service create --name registry --publish published=5001,target=5001 registry:2
 #docker-compose push
 
-echo "Enter number of workers:"
+echo -e "\n================================================\n"
+echo "Enter number of workers (available nodes):"
 read num_workers
 replicas=$((num_workers + 1))
 
-# Create vagrant workers VMs option
-for(( i=1; i<="$num_workers"; i++)); do
-  ./new_worker_vagrant.sh ${leader_IP}
-  cd vagrant_workers/worker${i} && vagrant up && cd ../..
-done
-
-# Setup Worker machines/nodes
-
+# worker token
 worker_join_token=$(docker swarm join-token -q worker)
 
-# Setup GlusterFS
-
-# Cluster's network
+# GlusterFS cluster's network
+echo -e "Creating overlay network for gluster cluster . . ."
 docker network create -d overlay --attachable netgfsc
 
 # Init some dirs
@@ -55,39 +51,71 @@ sudo mkdir /var/log/glusterfs
 sudo mkdir -p /bricks/brick1/gv0
 
 sudo mkdir swstorage
-sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, no dir exists: /var/lib/docker/volumes/NCP_ncdata/_data /var/lib/docker/volumes/NCP_ncdata/_data
+sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just plain storage
 sudo mount --make-shared ./swstorage
 
+echo -e "Creating gluster server on manager's node . . ."
 docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
 
 echo -e "\n=============================================="
 echo -e "\nExecute the following command on every machine\nyou want to add to the swarm cluster:\n"
 echo -e "\tdocker swarm join --token ${worker_join_token} ${leader_IP}:2377\n\n"
-echo "Type ready when every node is added . . ."
-while true; do
-  read ready
-  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-    break
-  fi
-  echo -e "Type ready when every node is added . . ."
+#echo "Type ready when every node is added . . ."
+#while true; do
+#  read ready
+#  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+#    break
+#  fi
+#  echo -e "Type ready when every node is added . . ."
+#done
+
+# Create vagrant workers and add to swarm
+echo -e "Creating vagrant workers..."
+for(( i=1; i<="$num_workers"; i++)); do
+  ./new_worker_vagrant.sh ${leader_IP}
+  cd vagrant_workers/worker${i}
+  vagrant up
+  vagrant ssh -c "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
+  cd ../..
 done
 
-# Vagrant option can use the provided script gluster_setup <no_test>
+
+echo -e "Creating NCP stack on swarm system . . ."
+# Set manager to drain so that ncp replicas are distributed to workers
+docker node update --availability drain ${leader_name}
+
+# Stack NCP start
+docker deploy --compose-file ../docker-compose.yml NCP${test}
+docker service scale NCP${test}_nextcloudpi=${num_workers}
+
+docker node update --availability active ${leader_name}
+
+# Setup gluster server on each node
+echo -e "Setting up gluster server on each worker . . ."
+for(( i=1; i<="$num_workers"; i++)); do
+  cd vagrant_workers/worker${i}
+  vagrant ssh -c "./gluster_setup.sh ${test}"
+  cd ../..
+done
+
 # Message to workers to create their gluster container
 echo -e "\n=============================================="
 echo -e "\nExecute the following commands on every worker\nnode of the swarm cluster.\nIf you're using the vagrant option you can execute script gluster_setup.sh instead\n"
 echo -e "In the last command, gfsc<X> should be replaced with the id number of each worker\n"
-echo -e "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files"
-echo -e "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files"
+echo -e "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files\n"
+echo -e "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files\n"
 echo -e "docker run --restart=always --name gfsc<X> -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
 echo -e "\nType ready when all workers are running gluster container . . ."
-while true; do
-  read ready
-  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-    break
-  fi
-  echo -e "Type ready when all workers are running gluster container . . ."
-done
+#while true; do
+#  read ready
+#  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+#    break
+#  fi
+#  echo -e "Type ready when all workers are running gluster container . . ."
+#done
+
+# Gluster volume setup
+echo -e "Creating gluster volume . . ."
 
 replicas_gfs=""
 for(( i=1; i<="$num_workers"; i++)); do
@@ -105,20 +133,15 @@ echo -e "\n=============================================="
 echo -e "\nExecute the following command on every node\nworker to mount the gluster volume.\nIf you're using the vagrant option execute gluster_volume.sh instead\n"
 echo -e "docker exec -it gfsc<X> mount.glusterfs gfsc<X>:/gv0 /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files\n"
 echo -e "Type ready when volume is mounted on every gluster server\n"
-while true; do
-  read ready
-  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-    break
-  fi
-  echo -e "Type ready when volume is mounted on every gluster server . . ."
+#while true; do
+#  read ready
+#  if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+#    break
+#  fi
+#  echo -e "Type ready when volume is mounted on every gluster server . . ."
+#done
+for(( i=1; i<="$num_workers"; i++)); do
+  cd vagrant_workers/worker${i}
+  vagrant ssh -c "./gluster_volume.sh ${test}"
+  cd ../..
 done
-
-# Set manager to drain so that ncp replicas are distributed to workers
-docker node update --availability drain ${leader_name}
-
-# Service ncp start - leader's IP
-docker deploy --compose-file ../docker-compose.yml NCP${test}
-docker service scale NCP${test}_nextcloudpi=${num_workers}
-
-docker node update --availability active ${leader_name}
-
