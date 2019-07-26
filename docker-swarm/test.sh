@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test=""
+test="f"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -125,9 +125,10 @@ echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     if [[ $ssh_option == 2 ]]; then
-      echo "${psw_list[${i}]}" > pass
-      sshpass -f pass ssh-copy-id ${username_list[${i}]}@${ip_list[${i}]}
-      rm pass
+#      echo "${psw_list[${i}]}" > pass
+      docker run --rm -it ictu/sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
+#      sshpass -f pass ssh-copy-id ${username_list[${i}]}@${ip_list[${i}]}
+#      rm pass
     fi
     ssh ${username_list[${i}]}@${ip_list[${i}]} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
   done
