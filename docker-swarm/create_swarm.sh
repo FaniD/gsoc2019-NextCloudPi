@@ -20,21 +20,9 @@ else
 fi
 leader_name=$(hostname)
 
-# Initialize swarm system with host as Leader (manager)
-echo -e "\nCreating swarm system . . ."
-docker swarm init --advertise-addr ${leader_IP}
-
-# Visualizer option (localhost:5000)
-echo -e "Run visualizer (localhost:5000) . . ."
-docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
-
-# Registry option
-#docker service create --name registry --publish published=5001,target=5001 registry:2
-#docker-compose push
-
 echo -e "\n================================================\n"
 echo -e "Choose one of the options described below.\n"
-echo -e "(1) I want to use existing machines"
+echo -e "(1) I want to use existing machines as workers"
 echo -e "\tChoosing this option, you will have to provide a list\n\tof IPs and add manually every node to swarm system and\n\tgluster cluster by following the insctructions provided.\n"
 echo -e "(2) Vagrant option\n\tAutomatically create new VMs and add them to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof each VM through the Vagrantfile provided."
 echo -e "\nType 1 or 2:"
@@ -46,14 +34,57 @@ replicas=$((num_workers + 1))
 
 if [[ $option == 1 ]]; then
   echo -e "\n================================================\n"
-  echo -e "Provide each node's IP address line per line\n"
+  echo -e "\nTo fully automate the whole process, manager's public\nkey should be added to authorized_keys file on every\nworker node."
+  echo -e "You can either add the public key manually or \nprovide the credentials for each node to fix it automatically.\n"
+  echo -e "Choose one of the following options:\n"
+  echo -e "(1) Manually add manager's public key to authorized_keys files on every node."
+  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username\n\t"
+  echo -e "(2) Fix it for me automatically."
+  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username\n\t* Password\n"
+  echo -e "Type 1 or 2"
+  read ssh_option
+  
   ip_list=[]
+  username_list=[]
+  if [[ $ssh_option == 2 ]]; then
+	  psw_list=[]
+  fi
   for(( i=1; i<="$num_workers"; i++)); do
-    read node_ip
-    ip_list+=${node_ip}
+    while true; do
+      echo -e "\n===Worker${i}==="
+      echo -e "IP address:"
+      read node_ip
+      echo -e "Username:"
+      read node_user
+      if [[ $ssh_option == 2 ]]; then
+        echo -e "Password:"
+        read node_psw
+      fi
+      echo -e "\nIf the information above is correct hit enter, otherwise type 'no' to re-write it (<enter>/no)"
+      read info_ok
+      if [[ $info_ok != "no" ]]; then
+	ip_list+=${node_ip}
+        username_list+=${node_user}
+	if [[ $ssh_option == 2 ]]; then
+	  psw_list+=${node_psw}
+	fi
+        break;
+      fi
+    done
   done
 fi
 
+# Initialize swarm system with host as Leader (manager)
+echo -e "\nCreating swarm system . . ."
+docker swarm init --advertise-addr ${leader_IP}
+
+# Visualizer option (localhost:5000)
+echo -e "Run visualizer (localhost:5000) . . ."
+docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+
+# Registry option
+#docker service create --name registry --publish published=5001,target=5001 registry:2
+#docker-compose push
 # worker token
 worker_join_token=$(docker swarm join-token -q worker)
 
