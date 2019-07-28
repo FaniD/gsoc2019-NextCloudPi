@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test=""
+test="f"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -23,7 +23,7 @@ leader_name=$(hostname)
 echo -e "\n================================================\n"
 echo -e "Choose one of the options described below.\n"
 echo -e "(1) I want to use existing machines as workers"
-echo -e "\tChoosing this option, you will have to provide a list\n\tof IPs and add manually every node to swarm system and\n\tgluster cluster by following the insctructions provided.\n"
+echo -e "\tChoosing this option, you will have to provide some\n\tinfo about each node and add manually every node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for these machines is to have\n\tdocker installed and ssh server enabled."
 echo -e "(2) Vagrant option\n\tAutomatically create new VMs and add them to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof each VM through the Vagrantfile provided."
 echo -e "\nType 1 or 2:"
 read option
@@ -38,12 +38,14 @@ if [[ $option == 1 ]]; then
   echo -e "You can either add the public key manually or \nprovide the credentials for each node to fix it automatically.\n"
   echo -e "Choose one of the following options:\n"
   echo -e "(1) Manually add manager's public key to authorized_keys files on every node."
-  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username\n\t"
+  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\t"
   echo -e "(2) Fix it for me automatically."
-  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username\n\t* Password\n"
-  echo -e "Type 1 or 2"
+  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton every node.\n"
+  echo -e "Type 1 or 2:"
   read ssh_option
   
+  echo -e "\n================================================\n"
+  echo -e "\nProvide worker node's information below as asked:"
   ip_list=[]
   username_list=[]
   if [[ $ssh_option == 2 ]]; then
@@ -74,13 +76,26 @@ if [[ $option == 1 ]]; then
   done
 fi
 
+if [[ $ssh_option == 1 ]]; then
+  echo -e "\n================================================\n"
+  echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually."
+  echo -e "Type ready when you're finished"
+  while true; do
+    read ready
+    if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+      break
+    fi
+    echo -e "Type ready when you're finished . . ."
+  done
+fi
+
 # Initialize swarm system with host as Leader (manager)
 echo -e "\nCreating swarm system . . ."
 docker swarm init --advertise-addr ${leader_IP}
 
 # Visualizer option (localhost:5000)
-echo -e "Run visualizer (localhost:5000) . . ."
-docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+#echo -e "Run visualizer (localhost:5000) . . ."
+#docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
 
 # Registry option
 #docker service create --name registry --publish published=5001,target=5001 registry:2
@@ -106,17 +121,14 @@ sudo mount --make-shared ./swstorage
 echo -e "Creating gluster server on manager's node . . ."
 docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
 
-echo -e "\n=============================================="
-echo -e "\nExecute the following command on every machine\nyou want to add to the swarm cluster:\n"
-echo -e "\tdocker swarm join --token ${worker_join_token} ${leader_IP}:2377\n\n"
+echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
-  echo "Type ready when every node is added . . ."
-  while true; do
-    read ready
-    if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-      break
+  for(( i=1; i<="$num_workers"; i++)); do
+    if [[ $ssh_option == 2 ]]; then
+      sudo sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
+#      docker run --rm ictu/sshpass -p ${psw_list[${i}]} ssh -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
     fi
-    echo -e "Type ready when every node is added . . ."
+    ssh ${username_list[${i}]}@${ip_list[${i}]} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
   done
 else
   # Create vagrant workers and add to swarm
@@ -150,20 +162,9 @@ if [[ $option == 2 ]]; then
     cd ../..
   done
 else
-  # Message to workers to create their gluster container
-  echo -e "\n=============================================="
-  echo -e "\nExecute the following commands on every worker\nnode of the swarm cluster.\nAlternatively, you can use script gluster_setup.sh.\n"
-  echo -e "In the last command, gfsc<X> should be replaced with the id number of each worker\n"
-  echo -e "sudo mount --bind /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files\n"
-  echo -e "sudo mount --make-shared /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files\n"
-  echo -e "docker run --restart=always --name gfsc<X> -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=/var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files,target=/var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos"
-  echo -e "\nType ready when all workers are running gluster container . . ."
-  while true; do
-    read ready
-    if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-      break
-    fi
-      echo -e "Type ready when all workers are running gluster container . . ."
+  for(( i=1; i<="$num_workers"; i++)); do
+    scp gluster_setup.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
+    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_setup.sh ${test}"
   done
 fi
 
@@ -188,15 +189,8 @@ if [[ $option == 2 ]]; then
     cd ../..
   done
 else
-  echo -e "\n=============================================="
-  echo -e "\nExecute the following command on every node\nworker to mount the gluster volume.\nAlternatively you can use script gluster_volume.sh.\n"
-  echo -e "docker exec -it gfsc<X> mount.glusterfs gfsc<X>:/gv0 /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files\n"
-  echo -e "Type ready when volume is mounted on every gluster server\n"
-  while true; do
-    read ready
-    if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-      break
-    fi
-    echo -e "Type ready when volume is mounted on every gluster server . . ."
+  for(( i=1; i<="$num_workers"; i++)); do
+    scp gluster_volume.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
+    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_volume.sh ${test}"
   done
 fi
