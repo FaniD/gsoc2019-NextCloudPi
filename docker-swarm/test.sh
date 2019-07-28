@@ -94,8 +94,8 @@ echo -e "\nCreating swarm system . . ."
 docker swarm init --advertise-addr ${leader_IP}
 
 # Visualizer option (localhost:5000)
-echo -e "Run visualizer (localhost:5000) . . ."
-docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+#echo -e "Run visualizer (localhost:5000) . . ."
+#docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
 
 # Registry option
 #docker service create --name registry --publish published=5001,target=5001 registry:2
@@ -126,7 +126,7 @@ if [[ $option == 1 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     if [[ $ssh_option == 2 ]]; then
 #      echo "${psw_list[${i}]}" > pass
-      docker run --rm -it ictu/sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
+      docker run --rm ictu/sshpass -p ${psw_list[${i}]} ssh-copy-id StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
 #      sshpass -f pass ssh-copy-id ${username_list[${i}]}@${ip_list[${i}]}
 #      rm pass
     fi
