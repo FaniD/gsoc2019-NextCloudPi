@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="11"
+test="15"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
