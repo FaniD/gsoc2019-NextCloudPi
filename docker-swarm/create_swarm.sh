@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="f"
+test="11"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -65,10 +65,10 @@ if [[ $option == 1 ]]; then
       echo -e "\nIf the information above is correct hit enter, otherwise type 'no' to re-write it (<enter>/no)"
       read info_ok
       if [[ $info_ok != "no" ]]; then
-	ip_list+=${node_ip}
-        username_list+=${node_user}
+	ip_list+=( ${node_ip} )
+	username_list+=( ${node_user} )
 	if [[ $ssh_option == 2 ]]; then
-	  psw_list+=${node_psw}
+          psw_list+=( ${node_psw} )
 	fi
         break;
       fi
@@ -107,8 +107,8 @@ echo -e "\nCreating swarm system . . ."
 docker swarm init --advertise-addr ${leader_IP}
 
 # Visualizer option (localhost:5000)
-#echo -e "Run visualizer (localhost:5000) . . ."
-#docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+echo -e "Run visualizer (localhost:5000) . . ."
+docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
 
 # Registry option
 #docker service create --name registry --publish published=5001,target=5001 registry:2
@@ -138,7 +138,7 @@ echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     if [[ $ssh_option == 2 ]]; then
-        sudo sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
+      sudo sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub ${username_list[${i}]}@${ip_list[${i}]}
     fi
     ssh ${username_list[${i}]}@${ip_list[${i}]} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
   done
@@ -188,6 +188,8 @@ for(( i=1; i<="$num_workers"; i++)); do
   docker exec -it gfsc0 gluster peer probe gfsc${i}
   replicas_gfs+="gfsc${i}:/bricks/brick1/gv0 "
 done
+
+sleep 60
 
 # Create replicated volume
 docker exec -it gfsc0 gluster volume create gv0 replica ${replicas} gfsc0:/bricks/brick1/gv0 ${replicas_gfs}
