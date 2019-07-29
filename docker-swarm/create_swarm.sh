@@ -87,6 +87,19 @@ if [[ $ssh_option == 1 ]]; then
     fi
     echo -e "Type ready when you're finished . . ."
   done
+else
+  if [[ ! -f /usr/bin/sshpass ]]; then
+    echo -e "\n================================================\n"
+    echo -e "Please install package sshpass before we continue."
+    echo -e "Type ready when you're finished"
+    while true; do
+      read ready
+      if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+        break
+      fi
+      echo -e "Type ready when you're finished . . ."
+    done
+  fi
 fi
 
 # Initialize swarm system with host as Leader (manager)
@@ -125,8 +138,7 @@ echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     if [[ $ssh_option == 2 ]]; then
-      sudo sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
-#      docker run --rm ictu/sshpass -p ${psw_list[${i}]} ssh -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
+        sudo sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no ${username_list[${i}]}@${ip_list[${i}]}
     fi
     ssh ${username_list[${i}]}@${ip_list[${i}]} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
   done
