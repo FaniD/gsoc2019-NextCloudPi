@@ -1,0 +1,51 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_datadir:  "{{ lookup('env','DATADIR') }}"
+  tasks:
+    - shell: source /usr/local/etc/library.sh
+
+    - shell: cd /var/www/nextcloud; sudo -u www-data php occ config:system:get datadirectory
+      register: srcdir
+
+    - fail:
+        msg: "Error reading data directory. Is NextCloud running and configured?"
+      when: not srcdir
+
+    - stat:
+        path: "{{ srcdir.stdout }}"
+      register: folder_srcdir
+
+    - shell: echo -e "database directory $SRCDIR not found"
+      when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
+
+    - fail:
+        msg: "database directory not found"
+      when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
+
+    - shell: echo -e "INFO: data already there"
+      when: srcdir.stdout == local_datadir
+
+    - meta: end_play
+      when: srcdir.stdout == local_datadir
+
+    - shell: dirname "{{ local_datadir }}"
+      register: basedir
+
+    - stat:
+        path: "{{ basedir.stdout }}"
+      register: folder_basedir
+
+    - shell: echo "$BASEDIR does not exist"
+      when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
+
+    - fail:
+        msg: "Basedir does not exist"
+      when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
+
+    - shell: mountpoint -q "{{ local_datadir }}"
+
+
