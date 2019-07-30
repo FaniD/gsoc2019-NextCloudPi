@@ -1,14 +1,23 @@
 #!/bin/bash
 
-# First execute ./new_worker_vagrant.sh <leader's IP>
-# cd vagrant_workers/worker<new>
-# vagrant up
-# vagrant ssh
-# ./gluster_setup.sh <test>
+echo -e "Choose one of the options below:"
+echo -e "(1) I will use an existing machine"
+echo -e "\tThis option requires FIX LATER according to create swarm"
+echo -e "(2) Create a new VM automatically"
+read option
+
+leader_IP=$(docker node inspect self --format '{{ .Status.Addr  }}')
+
+if [[ $option == 2 ]]; then
+  ./new_worker_vagrant.sh ${leader_IP}
+  cd vagrant_workers/worker<new>
+  vagrant up
+  vagrant ssh
+  ./gluster_setup.sh ${test}
 
 worker_id="${1:-1}"
 
-docker exec -it gfsc0 gluster peer probe gfsc${worker_id}
+docker exec gfsc0 gluster peer probe gfsc${worker_id}
 
 replicas=$(ls vagrant_workers | wc -l)
 
