@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # test id
-test="${1:-1}"
+test="${1:-""}"
 
 worker_id=$(echo $(hostname)|awk '{print substr($0,length($0),1)}')
 

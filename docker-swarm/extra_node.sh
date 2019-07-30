@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# test id
+test="${1:-""}"
+
 echo -e "Choose one of the options below:"
 echo -e "(1) I will use an existing machine"
 echo -e "\tThis option requires FIX LATER according to create swarm"

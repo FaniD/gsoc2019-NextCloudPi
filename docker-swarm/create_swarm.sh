@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="18"
+test="20"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -134,10 +134,13 @@ sudo mount --make-shared ./swstorage
 echo -e "Creating gluster server on manager's node . . ."
 while true; do
   docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
+  sleep 15
   docker exec gfsc0 gluster peer status > status
-  if [[ $status != "Connection failed. Please check if gluster daemon is operational."]]; then
+  if [[ $( cat status ) != *"Connection failed. Please check if gluster daemon is operational."* ]]; then
+    rm status
     break
   fi
+  rm status
   docker kill gfsc0
   docker rm gfsc0
 done
@@ -210,11 +213,13 @@ if [[ $option == 2 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     cd vagrant_workers/worker${i}
     vagrant ssh -c "./gluster_volume.sh ${test}"
+    vagrant ssh -c "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
     cd ../..
   done
 else
   for(( i=1; i<="$num_workers"; i++)); do
     scp gluster_volume.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
     ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_volume.sh ${test}"
+    ssh ${username_list[${i}]}@${ip_list[${i}]} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
   done
 fi
