@@ -187,7 +187,7 @@ if [[ $option == 2 ]]; then
 else
   for(( i=1; i<="$num_workers"; i++)); do
     scp gluster_setup.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
-    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_setup.sh ${test}"
+    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_setup.sh ${test} ${i}"
   done
 fi
 
@@ -219,7 +219,7 @@ if [[ $option == 2 ]]; then
 else
   for(( i=1; i<="$num_workers"; i++)); do
     scp gluster_volume.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
-    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_volume.sh ${test}"
+    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_volume.sh ${test} ${i}"
     ssh ${username_list[${i}]}@${ip_list[${i}]} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
   done
 fi

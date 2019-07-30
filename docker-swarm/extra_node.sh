@@ -36,6 +36,7 @@ sleep 15
 
 if [[ $option == 2]]; then
   cd vagrant_workers/worker${worker_id}
-  vagrant ssh -c "docker exec gfsc${worker_id} mount.glusterfs gfsc${worker_id}:/gv0 /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+  vagrant ssh -c "./gluster_volume.sh ${test}"
+  vagrant ssh -c "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
   cd ../..
 fi

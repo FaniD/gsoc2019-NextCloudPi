@@ -3,7 +3,8 @@
 # test id
 test="${1:-""}"
 
-worker_id=$(echo $(hostname)|awk '{print substr($0,length($0),1)}')
+worker=$(echo $(hostname)|awk '{print substr($0,length($0),1)}')
+worker_id="${2:-$worker}"
 
 # The following commands should be run at each node worker
 
