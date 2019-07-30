@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="15"
+test="16"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -180,21 +180,23 @@ else
   done
 fi
 
+sleep 15
+
 # Gluster volume setup
 echo -e "Creating gluster volume . . ."
 replicas_gfs=""
 for(( i=1; i<="$num_workers"; i++)); do
   # Connect node's gluster container to the gluster cluster
-  docker exec -it gfsc0 gluster peer probe gfsc${i}
+  docker exec gfsc0 gluster peer probe gfsc${i}
   replicas_gfs+="gfsc${i}:/bricks/brick1/gv0 "
 done
 
-sleep 60
+sleep 15
 
 # Create replicated volume
-docker exec -it gfsc0 gluster volume create gv0 replica ${replicas} gfsc0:/bricks/brick1/gv0 ${replicas_gfs}
-docker exec -it gfsc0 gluster volume start gv0
-docker exec -it gfsc0 mount.glusterfs gfsc0:/gv0 $(pwd)/swstorage
+docker exec gfsc0 gluster volume create gv0 replica ${replicas} gfsc0:/bricks/brick1/gv0 ${replicas_gfs}
+docker exec gfsc0 gluster volume start gv0
+docker exec gfsc0 mount.glusterfs gfsc0:/gv0 $(pwd)/swstorage
 
 if [[ $option == 2 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
