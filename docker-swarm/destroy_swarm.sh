@@ -14,7 +14,7 @@ for((i=1; i<="$num_workers"; i++)); do
   cd ../..
 done
 
-#sudo rm -r vagrant_workers/worker*
+sudo rm -r vagrant_workers/worker*
 
 # Kill visualizer
 visualizer=$(docker ps | grep dockersamples/visualizer)

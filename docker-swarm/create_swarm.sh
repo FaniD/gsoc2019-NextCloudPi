@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="17"
+test="18"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -132,7 +132,15 @@ sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just 
 sudo mount --make-shared ./swstorage
 
 echo -e "Creating gluster server on manager's node . . ."
-docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
+while true; do
+  docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
+  docker exec gfsc0 gluster peer status > status
+  if [[ $status != "Connection failed. Please check if gluster daemon is operational."]]; then
+    break
+  fi
+  docker kill gfsc0
+  docker rm gfsc0
+done
 
 echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
