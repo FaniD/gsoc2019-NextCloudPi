@@ -23,7 +23,7 @@ leader_name=$(hostname)
 echo -e "\n================================================\n"
 echo -e "Choose one of the options described below.\n"
 echo -e "(1) I want to use existing machines as workers"
-echo -e "\tChoosing this option, you will have to provide some\n\tinfo about each node and add manually every node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for these machines is to have\n\tdocker installed and ssh server enabled."
+echo -e "\tChoosing this option, you will have to provide some\n\tinfo about each node in order to add every node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for these machines is to have\n\tdocker installed and ssh server enabled."
 echo -e "(2) Vagrant option\n\tAutomatically create new VMs and add them to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof each VM through the Vagrantfile provided."
 echo -e "\nType 1 or 2:"
 read option
@@ -74,23 +74,10 @@ if [[ $option == 1 ]]; then
       fi
     done
   done
-fi
 
-if [[ $ssh_option == 1 ]]; then
-  echo -e "\n================================================\n"
-  echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually."
-  echo -e "Type ready when you're finished"
-  while true; do
-    read ready
-    if [[ $ready == "ready" || $ready == "Ready" ]] ; then
-      break
-    fi
-    echo -e "Type ready when you're finished . . ."
-  done
-else
-  if [[ ! -f /usr/bin/sshpass ]]; then
+  if [[ $ssh_option == 1 ]]; then
     echo -e "\n================================================\n"
-    echo -e "Please install package sshpass before we continue."
+    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually."
     echo -e "Type ready when you're finished"
     while true; do
       read ready
@@ -99,6 +86,19 @@ else
       fi
       echo -e "Type ready when you're finished . . ."
     done
+  else
+    if [[ ! -f /usr/bin/sshpass ]]; then
+      echo -e "\n================================================\n"
+      echo -e "Please install package sshpass before we continue."
+      echo -e "Type ready when you're finished"
+      while true; do
+        read ready
+        if [[ $ready == "ready" || $ready == "Ready" ]] ; then
+          break
+        fi
+        echo -e "Type ready when you're finished . . ."
+      done
+    fi
   fi
 fi
 
