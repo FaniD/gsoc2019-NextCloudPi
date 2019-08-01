@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="20"
+test="28"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -102,47 +102,48 @@ if [[ $option == 1 ]]; then
   fi
 fi
 
-# Initialize swarm system with host as Leader (manager)
-echo -e "\nCreating swarm system . . ."
-docker swarm init --advertise-addr ${leader_IP}
-
-# Visualizer option (localhost:5000)
-echo -e "Run visualizer (localhost:5000) . . ."
-docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
-
-# Registry option
-#docker service create --name registry --publish published=5001,target=5001 registry:2
-#docker-compose push
-
-# worker token
-worker_join_token=$(docker swarm join-token -q worker)
-
-# GlusterFS cluster's network
-echo -e "Creating overlay network for gluster cluster . . ."
-docker network create -d overlay --attachable netgfsc
-
-# Init some dirs
-sudo mkdir /etc/glusterfs
-sudo mkdir /var/lib/glusterd
-sudo mkdir /var/log/glusterfs
-sudo mkdir -p /bricks/brick1/gv0
-
-sudo mkdir swstorage
-sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just plain storage
-sudo mount --make-shared ./swstorage
-
-echo -e "Creating gluster server on manager's node . . ."
 while true; do
+  # Initialize swarm system with host as Leader (manager)
+  echo -e "\nCreating swarm system . . ."
+  docker swarm init --advertise-addr ${leader_IP}
+
+  # Visualizer option (localhost:5000)
+  echo -e "Run visualizer (localhost:5000) . . ."
+  docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+
+  # Registry option
+  #docker service create --name registry --publish published=5001,target=5001 registry:2
+  #docker-compose push
+
+  # worker token
+  worker_join_token=$(docker swarm join-token -q worker)
+
+  # GlusterFS cluster's network
+  echo -e "Creating overlay network for gluster cluster . . ."
+  docker network create -d overlay --attachable netgfsc
+
+  # Init some dirs
+  sudo mkdir /etc/glusterfs
+  sudo mkdir /var/lib/glusterd
+  sudo mkdir /var/log/glusterfs
+  sudo mkdir -p /bricks/brick1/gv0
+
+  sudo mkdir swstorage
+  sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just plain storage
+  sudo mount --make-shared ./swstorage
+
+  echo -e "Creating gluster server on manager's node . . ."
   docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
+
   sleep 15
+
   docker exec gfsc0 gluster peer status > status
   if [[ $( cat status ) != *"Connection failed. Please check if gluster daemon is operational."* ]]; then
     rm status
     break
   fi
   rm status
-  docker kill gfsc0
-  docker rm gfsc0
+  ./destroy_swarm.sh ${test}
 done
 
 echo -e "\nAttaching worker nodes to the swarm"

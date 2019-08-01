@@ -13,8 +13,8 @@ read option
 
 leader_name=$(hostname)
 leader_IP=$(docker node inspect self --format '{{ .Status.Addr  }}')
-replicas=$(ls vagrant_workers | wc -l)
-worker_id=$(( replicas -1 ))
+worker_id=$(ls vagrant_workers | wc -l)
+#worker_id=$(( replicas ))
 
 if [[ $option == 1 ]]; then
   echo -e "\n================================================\n"
@@ -106,6 +106,8 @@ else
 fi
 
 sleep 15
+
+replicas=$(( $worker_id + 1 ))
 
 docker exec gfsc0 gluster peer probe gfsc${worker_id}
 docker exec gfsc0 gluster volume add-brick gv0 replica ${replicas} gfsc${worker_id}:/bricks/brick1/gv0
