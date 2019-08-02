@@ -100,10 +100,10 @@ sleep 25
 
 if [[ $option == 1 ]]; then
   scp gluster_setup.sh ${node_user}@${node_ip}:~/
-  ssh ${node_user}@${node_ip} "./gluster_setup.sh ${test} ${worker_id}"
+  ssh ${node_user}@${node_ip} "sudo ./gluster_setup.sh ${test} ${worker_id}"
 else
   cd vagrant_workers/worker${worker_id}
-  vagrant ssh -c "./gluster_setup.sh ${test}"
+  vagrant ssh -c "sudo ./gluster_setup.sh ${test}"
   cd ../..
 fi
 
@@ -119,11 +119,11 @@ sleep 15
 
 if [[ $option == 1 ]]; then
   scp gluster_volume.sh ${node_user}@${node_ip}:~/
-  ssh ${node_user}@${node_ip} "./gluster_volume.sh ${test} ${worker_id}"
+  ssh ${node_user}@${node_ip} "sudo ./gluster_volume.sh ${test} ${worker_id}"
   ssh ${node_user}@${node_ip} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
 else
   cd vagrant_workers/worker${worker_id}
-  vagrant ssh -c "./gluster_volume.sh ${test}"
+  vagrant ssh -c "sudo ./gluster_volume.sh ${test}"
   vagrant ssh -c "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
   cd ../..
 fi

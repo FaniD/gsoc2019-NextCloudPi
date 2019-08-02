@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="36"
+test="57"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -38,7 +38,7 @@ if [[ $option == 1 ]]; then
   echo -e "You can either add the public key manually or \nprovide the credentials for each node to fix it automatically.\n"
   echo -e "Choose one of the following options:\n"
   echo -e "(1) Manually add manager's public key to authorized_keys files on every node."
-  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\t"
+  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\tMake sure that the sudoer user provided should be able\n\tto execute privileged actions without asking for password in\n\torder for the script to work automatically."
   echo -e "(2) Fix it for me automatically."
   echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton every node.\n"
   echo -e "Type 1 or 2:"
@@ -77,7 +77,7 @@ if [[ $option == 1 ]]; then
 
   if [[ $ssh_option == 1 ]]; then
     echo -e "\n================================================\n"
-    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually."
+    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually. \nRun 'ssh-add -L' to list host's keys in OpenSSH format.\nAlso fix users to be able to execute privileged actions without password."
     echo -e "Type ready when you're finished"
     while true; do
       read ready
@@ -87,6 +87,19 @@ if [[ $option == 1 ]]; then
       echo -e "Type ready when you're finished . . ."
     done
   else
+    echo -e "\n================================================\n"
+    echo -e "Identity id_rsa.pub will be used. Type 'y' to confirm, or type other identity (y/<id>):"
+    read identity
+    if [[ $identity == "y" || $identity == "Y" ]]; then
+      identity="id_rsa"
+    else
+      # if .pub is included fix it
+      if [[ $identity == *".pub"* ]]; then
+        identity=$(cut -d'.' -f1 <<< ${identity})
+      fi
+    fi
+    ssh-add ~/.ssh/${identity}
+
     if [[ ! -f /usr/bin/sshpass ]]; then
       echo -e "\n================================================\n"
       echo -e "Please install package sshpass before we continue."
@@ -102,38 +115,38 @@ if [[ $option == 1 ]]; then
   fi
 fi
 
-while true; do
-  # Initialize swarm system with host as Leader (manager)
-  echo -e "\nCreating swarm system . . ."
-  docker swarm init --advertise-addr ${leader_IP}
 
-  # GlusterFS cluster's network
-  echo -e "Creating overlay network for gluster cluster . . ."
-  docker network create -d overlay --attachable netgfsc
+# Initialize swarm system with host as Leader (manager)
+echo -e "\nCreating swarm system . . ."
+docker swarm init --advertise-addr ${leader_IP}
 
-  # Init some dirs
-  sudo mkdir /etc/glusterfs
-  sudo mkdir /var/lib/glusterd
-  sudo mkdir /var/log/glusterfs
-  sudo mkdir -p /bricks/brick1/gv0
+# GlusterFS cluster's network
+echo -e "Creating overlay network for gluster cluster . . ."
+docker network create -d overlay --attachable netgfsc
 
-  sudo mkdir swstorage
-  sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just plain storage
-  sudo mount --make-shared ./swstorage
+# Init some dirs
+sudo mkdir /etc/glusterfs
+sudo mkdir /var/lib/glusterd
+sudo mkdir /var/log/glusterfs
+sudo mkdir -p /bricks/brick1/gv0
 
-  echo -e "Creating gluster server on manager's node . . ."
-  docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
+sudo mkdir swstorage
+sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just plain storage
+sudo mount --make-shared ./swstorage
 
-  sleep 15
+echo -e "Creating gluster server on manager's node . . ."
+docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
 
-  docker exec gfsc0 gluster peer status > status
-  if [[ $( cat status ) != *"Connection failed. Please check if gluster daemon is operational."* ]]; then
-    rm status
-    break
-  fi
+sleep 15
+
+docker exec gfsc0 gluster peer status > status
+if [[ $( cat status ) == *"Connection failed. Please check if gluster daemon is operational."* ]]; then
   rm status
+  echo -e "GlusterFS didn't start properly. Please clear docker volumes and re-run the script"
   ./destroy_swarm.sh ${test}
-done
+  exit 1
+fi
+rm status
 
 # Visualizer option (localhost:5000)
 echo -e "Run visualizer (localhost:5000) . . ."
@@ -146,7 +159,7 @@ echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     if [[ $ssh_option == 2 ]]; then
-      sudo sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub ${username_list[${i}]}@${ip_list[${i}]}
+      sshpass -p ${psw_list[${i}]} ssh-copy-id -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/${identity}.pub ${username_list[${i}]}@${ip_list[${i}]}
     fi
     ssh ${username_list[${i}]}@${ip_list[${i}]} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
   done
@@ -184,7 +197,11 @@ if [[ $option == 2 ]]; then
 else
   for(( i=1; i<="$num_workers"; i++)); do
     scp gluster_setup.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
-    ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_setup.sh ${test} ${i}"
+    if [[ $ssh_option == 1 ]]; then
+      ssh ${username_list[${i}]}@${ip_list[${i}]} "sudo ./gluster_setup.sh ${test} ${i}"
+    else
+      echo ${psw_list[${i}]} | ssh -tt ${username_list[${i}]}@${ip_list[${i}]} "sudo ./gluster_setup.sh ${test} ${i}"
+    fi
   done
 fi
 
@@ -217,6 +234,10 @@ else
   for(( i=1; i<="$num_workers"; i++)); do
     scp gluster_volume.sh ${username_list[${i}]}@${ip_list[${i}]}:~/
     ssh ${username_list[${i}]}@${ip_list[${i}]} "./gluster_volume.sh ${test} ${i}"
-    ssh ${username_list[${i}]}@${ip_list[${i}]} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+    if [[ $ssh_option == 1 ]]; then
+      ssh ${username_list[${i}]}@${ip_list[${i}]} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+    else
+      echo ${psw_list[${i}]} | ssh -tt ${username_list[${i}]}@${ip_list[${i}]} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+    fi
   done
 fi

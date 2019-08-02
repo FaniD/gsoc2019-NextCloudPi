@@ -8,7 +8,7 @@ num_workers="${2:-$workers}"
 
 for((i=1; i<="$num_workers"; i++)); do
   cd vagrant_workers/worker${i}
-  vagrant halt
+  vagrant destroy
   cd ../..
 done
 
