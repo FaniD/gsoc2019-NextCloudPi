@@ -96,6 +96,8 @@ docker service scale NCP${test}_nextcloudpi=${worker_id}
 
 docker node update --availability active ${leader_name}
 
+sleep 25
+
 if [[ $option == 1 ]]; then
   scp gluster_setup.sh ${node_user}@${node_ip}:~/
   ssh ${node_user}@${node_ip} "./gluster_setup.sh ${test} ${worker_id}"
@@ -110,6 +112,7 @@ sleep 15
 replicas=$(( $worker_id + 1 ))
 
 docker exec gfsc0 gluster peer probe gfsc${worker_id}
+sleep 5
 docker exec gfsc0 gluster volume add-brick gv0 replica ${replicas} gfsc${worker_id}:/bricks/brick1/gv0
 
 sleep 15

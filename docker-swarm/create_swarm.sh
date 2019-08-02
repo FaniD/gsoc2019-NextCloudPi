@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="28"
+test="36"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -107,17 +107,6 @@ while true; do
   echo -e "\nCreating swarm system . . ."
   docker swarm init --advertise-addr ${leader_IP}
 
-  # Visualizer option (localhost:5000)
-  echo -e "Run visualizer (localhost:5000) . . ."
-  docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
-
-  # Registry option
-  #docker service create --name registry --publish published=5001,target=5001 registry:2
-  #docker-compose push
-
-  # worker token
-  worker_join_token=$(docker swarm join-token -q worker)
-
   # GlusterFS cluster's network
   echo -e "Creating overlay network for gluster cluster . . ."
   docker network create -d overlay --attachable netgfsc
@@ -145,6 +134,13 @@ while true; do
   rm status
   ./destroy_swarm.sh ${test}
 done
+
+# Visualizer option (localhost:5000)
+echo -e "Run visualizer (localhost:5000) . . ."
+docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+
+# worker token
+worker_join_token=$(docker swarm join-token -q worker)
 
 echo -e "\nAttaching worker nodes to the swarm"
 if [[ $option == 1 ]]; then
