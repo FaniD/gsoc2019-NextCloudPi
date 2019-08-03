@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# If docker-machines exist only for this swarm, num of workers equals machines
-# Otherwise needs num as input
+docker swarm leave --force
 workers=$(ls vagrant_workers | wc -l)
 workers=$((workers - 1))
 num_workers="${2:-$workers}"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="57"
+test="59"
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -77,7 +77,7 @@ if [[ $option == 1 ]]; then
 
   if [[ $ssh_option == 1 ]]; then
     echo -e "\n================================================\n"
-    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually. \nRun 'ssh-add -L' to list host's keys in OpenSSH format.\nAlso fix users to be able to execute privileged actions without password."
+    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of every swarm worker manually. \nRun 'ssh-add -L' to list host's keys in OpenSSH format.\nAlso configure users to be able to execute privileged actions without password."
     echo -e "Type ready when you're finished"
     while true; do
       read ready
@@ -135,7 +135,7 @@ sudo mount --bind ./swstorage ./swstorage # there won't be an ncp on host, just 
 sudo mount --make-shared ./swstorage
 
 echo -e "Creating gluster server on manager's node . . ."
-docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc -v /dev/:/dev gluster/gluster-centos
+docker run --restart=always --name gfsc0 -v /bricks:/bricks -v /etc/glusterfs:/etc/glusterfs:z -v /var/lib/glusterd:/var/lib/glusterd:z -v /var/log/glusterfs:/var/log/glusterfs:z -v /sys/fs/cgroup:/sys/fs/cgroup:ro --mount type=bind,source=$(pwd)/swstorage,target=$(pwd)/swstorage,bind-propagation=rshared -d --privileged=true --net=netgfsc gluster/gluster-centos
 
 sleep 15
 
@@ -191,7 +191,7 @@ echo -e "Setting up gluster server on each worker . . ."
 if [[ $option == 2 ]]; then
   for(( i=1; i<="$num_workers"; i++)); do
     cd vagrant_workers/worker${i}
-    vagrant ssh -c "./gluster_setup.sh ${test}"
+    vagrant ssh -c "sudo ./gluster_setup.sh ${test}"
     cd ../..
   done
 else
