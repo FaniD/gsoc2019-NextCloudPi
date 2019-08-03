@@ -14,22 +14,19 @@ read option
 leader_name=$(hostname)
 leader_IP=$(docker node inspect self --format '{{ .Status.Addr  }}')
 worker_id=$(ls vagrant_workers | wc -l)
-#worker_id=$(( replicas ))
 
 if [[ $option == 1 ]]; then
   echo -e "\n================================================\n"
   echo -e "\nTo fully automate the whole process, manager's public\nkey should be added to authorized_keys file on worker node."
-  echo -e "You can either add the public key manually or \nprovide the credentials ofthe node to fix it automatically.\n"
+  echo -e "You can either add the public key manually or \nprovide the credentials of the node to fix it automatically.\n"
   echo -e "Choose one of the following options:\n"
   echo -e "(1) Manually add manager's public key to authorized_keys files on worker node."
-  echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\t"
+  echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\tMake sure that the sudoer user provided should be able\n\tto execute privileged actions without asking for password in\n\torder for the script to work automatically."
   echo -e "(2) Fix it for me automatically."
   echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton worker node.\n"
   echo -e "Type 1 or 2:"
   read ssh_option
-fi
 
-if [[ $option == 1 ]]; then
   echo -e "\n================================================\n"
   echo -e "\nProvide worker node's information below as asked:"
   while true; do
@@ -51,7 +48,7 @@ if [[ $option == 1 ]]; then
 
   if [[ $ssh_option == 1 ]]; then
     echo -e "\n================================================\n"
-    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of worker node manually."
+    echo -e "Please make sure to add manager's public key to\nthe authorized_keys file of worker node manually.\nRun 'ssh-add -L' to list host's keys in OpenSSH format.\nAlso configure users to be able to execute privileged actions without password."
     echo -e "Type ready when you're finished"
     while true; do
       read ready
@@ -61,6 +58,19 @@ if [[ $option == 1 ]]; then
       echo -e "Type ready when you're finished . . ."
     done
   else
+    echo -e "\n================================================\n"
+    echo -e "Identity id_rsa.pub will be used. Type 'y' to confirm, or type other identity (y/<id>):"
+    read identity
+    if [[ $identity == "y" || $identity == "Y" ]]; then
+      identity="id_rsa"
+    else
+      # if .pub is included fix it
+      if [[ $identity == *".pub"* ]]; then
+        identity=$(cut -d'.' -f1 <<< ${identity})
+      fi
+    fi
+    ssh-add ~/.ssh/${identity}
+
     if [[ ! -f /usr/bin/sshpass ]]; then
       echo -e "\n================================================\n"
       echo -e "Please install package sshpass before we continue."
@@ -80,7 +90,7 @@ worker_join_token=$(docker swarm join-token -q worker)
 
 if [[ $option == 1 ]]; then
   if [[ $ssh_option == 2 ]]; then
-    sudo sshpass -p ${node_psw} ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub ${node_user}@${node_ip}
+    sshpass -p ${node_psw} ssh-copy-id -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/${identity}.pub ${node_user}@${node_ip}
   fi
   ssh ${node_user}@${node_ip} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
 else
@@ -100,7 +110,11 @@ sleep 25
 
 if [[ $option == 1 ]]; then
   scp gluster_setup.sh ${node_user}@${node_ip}:~/
-  ssh ${node_user}@${node_ip} "sudo ./gluster_setup.sh ${test} ${worker_id}"
+  if [[ $ssh_option == 1 ]]; then
+    ssh ${node_user}@${node_ip} "sudo ./gluster_setup.sh ${test} ${worker_id}"
+  else
+    echo ${node_psw} | ssh -tt ${node_user}@${node_ip} "sudo ./gluster_setup.sh ${test} ${worker_id}"
+  fi
 else
   cd vagrant_workers/worker${worker_id}
   vagrant ssh -c "sudo ./gluster_setup.sh ${test}"
@@ -119,11 +133,15 @@ sleep 15
 
 if [[ $option == 1 ]]; then
   scp gluster_volume.sh ${node_user}@${node_ip}:~/
-  ssh ${node_user}@${node_ip} "sudo ./gluster_volume.sh ${test} ${worker_id}"
-  ssh ${node_user}@${node_ip} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+  ssh ${node_user}@${node_ip} "./gluster_volume.sh ${test} ${worker_id}"
+  if [[ $ssh_option == 1 ]]; then
+    ssh ${node_user}@${node_ip} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+  else
+    echo ${node_psw} | ssh -tt ${node_user}@${node_ip} "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
+  fi
 else
   cd vagrant_workers/worker${worker_id}
-  vagrant ssh -c "sudo ./gluster_volume.sh ${test}"
+  vagrant ssh -c "./gluster_volume.sh ${test}"
   vagrant ssh -c "sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files; sudo chown www-data:www-data /var/lib/docker/volumes/NCP${test}_ncdata/_data/nextcloud/data/ncp/files/swarm"
   cd ../..
 fi

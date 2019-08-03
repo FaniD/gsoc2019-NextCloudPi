@@ -7,10 +7,10 @@ visualizer=$(docker ps | grep dockersamples/visualizer)
 visualizer_id=$(cut -d' ' -f1 <<<"$visualizer")
 docker kill ${visualizer_id}
 
+docker swarm leave --force 
+
 docker volume rm NCP${test}_ncdata
 docker network rm netgfsc
-
-docker swarm leave --force
 
 # Kill gluster
 docker kill gfsc0
