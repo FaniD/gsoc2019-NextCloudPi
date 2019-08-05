@@ -49,4 +49,70 @@
     - shell: mountpoint -q "{{ local_datadir }}"
       when: basedir.stdout == local.datadir
 
-    - shell: 
+    - shell: grep -q -e ext -e btrfs <( stat -fc%T "$BASEDIR" )
+      register: grep_out
+
+    - fail:
+        msg: "Only ext/btrfs filesystems can hold the data directory"
+      when: not grep_out
+
+    - shell: sudo -u www-data test -x "$BASEDIR"
+      register: test_out
+
+    - fail:
+        msg: "ERROR: the user www-data does not have access permissions over {{ basedir.stdout }} "
+      when: not test_out
+
+    - stat:
+        path: " {{ local_datadir }} "
+      register: folder_datadir
+
+    - shell: "${DATADIR}-$( date "+%m-%d-%y" )"
+      register: bkp
+      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
+
+    - shell: local BKP="${DATADIR}-$( date "+%m-%d-%y" )"
+      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
+
+    - shell: echo "INFO: $DATADIR is not empty. Creating backup $BKP"
+      register: echo_out
+      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
+      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
+
+    - command: mv "{{ local_datadir }}" "{{ bkp.stdout }}"
+      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
+
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ maintenance:mode --on
+
+    - shell: echo "moving data directory from {{ srcdir.stdout }} to {{ local_datadir}}"
+      register: echo_out
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
+
+    - shell: stat -fc%T "{{ basedir.stdout }}"
+      register: comp1
+
+    - shell: btrfs
+      register: comp2
+
+    - debug:
+        msg: "BTRFS filesystem detected"
+      when: comp1.stdout == comp2.stdout
+
+    - shell: btrfs subvolume create "{{ local_datadir }}"
+      register: btrfs
+      when: comp1.stdout == comp2.stdout
+
+    - fail:
+      when: (comp1.stdout == comp2.stdout) && (not btrfs)
+
+    - 
+
+
+
+    - command: chdir:/var/www/nextcloud 
+
