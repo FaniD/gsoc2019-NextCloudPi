@@ -110,9 +110,51 @@
     - fail:
       when: (comp1.stdout == comp2.stdout) && (not btrfs)
 
-    - 
+      #copy does not support reflink yet so we use shell for cp
+    - shell: cp --reflink=auto -raT "{{ srcdir.stdout }}" "{{ local_datadir }}" 
+      register: cp_status
 
+    - fail:
+        msg: "Copy failed"
+      when: cp_status
 
+    - file:
+        path: "{{ local_datadir }}"
+        owner: www-data
+        group: www-data
 
-    - command: chdir:/var/www/nextcloud 
+    - stat:
+        path: "{{ local_datadir }}"/tmp
+      register: datadirtmp_results
+
+    - file:
+        path: "{{ local_datadir }}"/tmp
+        state: directory
+      when: not datadirtmp_results.stat.exists
+
+    - file:
+        path: "{{ local_datadir }}"/tmp
+        owner: www-data
+        group: www-data
+   
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set tempdirectory --value "{{ local_datadir }}"/tmp
+    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = $DATADIR/tmp|" /etc/php/${PHPVER}/cli/php.ini
+
+    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = $DATADIR/tmp|" /etc/php/${PHPVER}/fpm/php.ini
+
+    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = $DATADIR/tmp|"     /etc/php/${PHPVER}/fpm/php.ini
+
+    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache=$DATADIR/.opcache|" /etc/php/${PHPVER}/mods-available/opcache.ini
+    - stat:
+        path: /etc/fail2ban/jail.local
+      register: jail_local
+
+    - shell: sed -i "s|logpath  =.*nextcloud.log|logpath  = $DATADIR/nextcloud.log|" /etc/fail2ban/jail.local
+      when: jail_local.stat.exists
+
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set datadirectory --value="$DATADIR"
+
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set logfile --value="$DATADIR/nextcloud.log"
+
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ maintenance:mode --off
 
