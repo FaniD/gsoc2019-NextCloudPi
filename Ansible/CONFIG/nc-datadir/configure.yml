@@ -47,5 +47,6 @@
       when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
 
     - shell: mountpoint -q "{{ local_datadir }}"
+      when: basedir.stdout == local.datadir
 
-
+    - shell: 
