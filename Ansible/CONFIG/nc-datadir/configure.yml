@@ -5,6 +5,7 @@
   connection: local
   vars:
     local_datadir:  "{{ lookup('env','DATADIR') }}"
+    local_phpver: "{{ lookup('env','PHPVER') }}"
   tasks:
     - shell: source /usr/local/etc/library.sh
 
@@ -19,7 +20,12 @@
         path: "{{ srcdir.stdout }}"
       register: folder_srcdir
 
-    - shell: echo -e "database directory $SRCDIR not found"
+    - shell: echo -e "database directory {{ srcdir.stdout }} not found"
+      register: echo_out
+      when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
       when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
 
     - fail:
@@ -27,6 +33,11 @@
       when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
 
     - shell: echo -e "INFO: data already there"
+      register: echo_out
+      when: srcdir.stdout == local_datadir
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
       when: srcdir.stdout == local_datadir
 
     - meta: end_play
@@ -39,11 +50,12 @@
         path: "{{ basedir.stdout }}"
       register: folder_basedir
 
-    - shell: echo "$BASEDIR does not exist"
+    - shell: echo "{{ basedir.stdout }} does not exist"
+      register: echo_out
       when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
 
     - fail:
-        msg: "Basedir does not exist"
+        msg: "{{ echo_out.stdout }}"
       when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
 
     - shell: mountpoint -q "{{ local_datadir }}"
@@ -67,14 +79,14 @@
         path: " {{ local_datadir }} "
       register: folder_datadir
 
-    - shell: "${DATADIR}-$( date "+%m-%d-%y" )"
+    - shell: "{{ local_datadir }}-$( date "+%m-%d-%y" )"
       register: bkp
       when: folder_datadir.stat.exists and folder_datadir.stat.isdir
 
-    - shell: local BKP="${DATADIR}-$( date "+%m-%d-%y" )"
+    - shell: local BKP="{{ local_datadir }}-$( date "+%m-%d-%y" )"
       when: folder_datadir.stat.exists and folder_datadir.stat.isdir
 
-    - shell: echo "INFO: $DATADIR is not empty. Creating backup $BKP"
+    - shell: echo "INFO: {{ local_datadir }} is not empty. Creating backup $BKP"
       register: echo_out
       when: folder_datadir.stat.exists and folder_datadir.stat.isdir
 
@@ -138,23 +150,23 @@
         group: www-data
    
     - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set tempdirectory --value "{{ local_datadir }}"/tmp
-    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = $DATADIR/tmp|" /etc/php/${PHPVER}/cli/php.ini
+    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ local_phpver }}/cli/php.ini
 
-    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = $DATADIR/tmp|" /etc/php/${PHPVER}/fpm/php.ini
+    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ local_phpver }}/fpm/php.ini
 
-    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = $DATADIR/tmp|"     /etc/php/${PHPVER}/fpm/php.ini
+    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ local_datadir }}/tmp|"     /etc/php/{{ local_phpver }}/fpm/php.ini
 
-    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache=$DATADIR/.opcache|" /etc/php/${PHPVER}/mods-available/opcache.ini
+    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache={{ local_datadir }}/.opcache|" /etc/php/{{ local_phpver }}/mods-available/opcache.ini
+
     - stat:
         path: /etc/fail2ban/jail.local
       register: jail_local
 
-    - shell: sed -i "s|logpath  =.*nextcloud.log|logpath  = $DATADIR/nextcloud.log|" /etc/fail2ban/jail.local
+    - shell: sed -i "s|logpath  =.*nextcloud.log|logpath  = {{ local_datadir }}/nextcloud.log|" /etc/fail2ban/jail.local
       when: jail_local.stat.exists
 
-    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set datadirectory --value="$DATADIR"
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set datadirectory --value={{ local_datadir }}
 
-    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set logfile --value="$DATADIR/nextcloud.log"
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set logfile --value="{{ local_datadir }}/nextcloud.log"
 
     - command: chdir:/var/www/nextcloud sudo -u www-data php occ maintenance:mode --off
-
