@@ -1,0 +1,28 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_active: "{{ lookup('env','ACTIVE') }}"
+    local_user: "{{ lookup('env', 'USER') }}"
+    local_confirm: "{{ lookup('env', 'CONFIRM') }}"
+  tasks:
+    - shell: local OPT=Off
+      when: local_active == "no"
+
+    - 
+      when: local_active == "no"
+
+    - shell: local OPT=On
+      when: local_active != "no"
+
+    - shell: sed -i "s|RewriteEngine .*|RewriteEngine $OPT|" /etc/apache2/sites-available/000-default.conf
+
+    - shell: echo "Forcing HTTPS $OPT"
+      register: echo_out
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
+
+    - shell: bash -c "sleep 2 && service apache2 reload" &>/dev/null &
