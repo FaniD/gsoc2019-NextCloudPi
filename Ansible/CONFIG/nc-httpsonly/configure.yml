@@ -11,15 +11,20 @@
     - shell: local OPT=Off
       when: local_active == "no"
 
-    - 
+    - shell: echo "Off"
+      register: opt
       when: local_active == "no"
 
     - shell: local OPT=On
       when: local_active != "no"
 
+    - shell: echo "On"
+      register: opt
+      when: local_active != no
+
     - shell: sed -i "s|RewriteEngine .*|RewriteEngine $OPT|" /etc/apache2/sites-available/000-default.conf
 
-    - shell: echo "Forcing HTTPS $OPT"
+    - shell: echo "Forcing HTTPS {{ opt.stdout }}"
       register: echo_out
 
     - debug:
