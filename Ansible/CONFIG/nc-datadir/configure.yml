@@ -5,11 +5,14 @@
   connection: local
   vars:
     local_datadir:  "{{ lookup('env','DATADIR') }}"
-    local_phpver: "{{ lookup('env','PHPVER') }}"
   tasks:
     - shell: source /usr/local/etc/library.sh
+      # sets PHPVER
+      
+    - shell: echo "${PHPVER}"
+      register: phpver
 
-    - shell: cd /var/www/nextcloud; sudo -u www-data php occ config:system:get datadirectory
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:get datadirectory
       register: srcdir
 
     - fail:
@@ -150,13 +153,13 @@
         group: www-data
    
     - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set tempdirectory --value "{{ local_datadir }}"/tmp
-    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ local_phpver }}/cli/php.ini
+    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ phpver.stdout }}/cli/php.ini
 
-    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ local_phpver }}/fpm/php.ini
+    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ phpver.stdout }}/fpm/php.ini
 
-    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ local_datadir }}/tmp|"     /etc/php/{{ local_phpver }}/fpm/php.ini
+    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ local_datadir }}/tmp|"     /etc/php/{{ phpver.stdout }}/fpm/php.ini
 
-    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache={{ local_datadir }}/.opcache|" /etc/php/{{ local_phpver }}/mods-available/opcache.ini
+    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache={{ local_datadir }}/.opcache|" /etc/php/{{ phpver.stdout }}/mods-available/opcache.ini
 
     - stat:
         path: /etc/fail2ban/jail.local

@@ -1,0 +1,62 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    dbadmin: ncadmin
+    local_datadir:  "{{ lookup('env','DATADIR') }}"
+  tasks:
+    - shell: source /usr/local/etc/library.sh
+      # PHPVER is set
+      
+    - shell: echo "${PHPVER}"
+      register: phpver
+
+    - shell: echo "Setting up a clean Nextcloud instance... wait until message 'NC init done'"
+      register: echo_out
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
+
+      # checks
+    - shell: grep "^requirepass" /etc/redis/redis.conf  | cut -d'' -f2
+      register: redispass
+
+    - shell: echo "redis server without a password. Abort"
+      register: echo_out
+      when: redispass.stdout == ""
+      
+    - fail:
+        msg: "{{ echo_out.stdout }}"
+      when: redispass.stdout == ""
+
+      ## RE-CREATE DATABASE TABLE
+    - shell: echo "Setting up database..."
+      register: echo_out
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
+
+    - shell: pgrep -c mysqld &>/dev/null
+      register: condition
+
+      # launch mariadb if not already running
+    - shell: mysql &
+      when: not condition
+
+      # wait for mariadb
+    - shell: pgrep -x mysqld &>/dev/null
+      register: condition
+
+    - shell: echo "mariaDB process not found. Waiting..."
+      when: condition
+
+    - debug:
+        msg: "{{ echo_out.stdout }}"
+      when: condition
+
+    - 
+
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ maintenance:mode --on
+
