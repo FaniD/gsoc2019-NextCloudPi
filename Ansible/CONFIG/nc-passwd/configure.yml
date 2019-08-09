@@ -1,0 +1,42 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    pass: "{{ lookup('env','PASSWORD') }}"
+    confirm: "{{ lookup('env', 'CONFIRM') }}"
+  tasks:
+      # updat password
+    - shell: echo -e "{{ password }}\n{{ confirm }}" | passwd ncp &>/dev/null
+      register: status
+   
+    - debug:
+        msg: "password updated successfully"
+      when: status.stdout
+
+    - fail:
+        msg: "passwords do not match"
+      when: not status.stdout
+
+      # persist ncp-web password in docker container
+    - stat:
+        path: "/.docker-image"
+      register: docker_image
+
+    - command: mv /etc/shadow /data/etc/shadow
+      when: docker_image.stat.exists
+
+    - shell: ln -s /data/etc/shadow /etc/shadow
+      when: docker_image.stat.exists
+
+      # Run cron.php once now to get all checks right in CI.
+    - shell: sudo -u www-data php /var/www/nextcloud/cron.php
+
+      # activate NCP
+    - shell: a2ensite  ncp nextcloud
+
+    - shell: a2dissite ncp-activation
+
+    - shell: bash -c "sleep 1.5 && service apache2 reload" &>/dev/null &
+

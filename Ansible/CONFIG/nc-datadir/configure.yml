@@ -4,172 +4,158 @@
 - hosts: local
   connection: local
   vars:
-    local_datadir:  "{{ lookup('env','DATADIR') }}"
+    datadir:  "{{ lookup('env','DATADIR') }}"
   tasks:
-    - shell: source /usr/local/etc/library.sh
-      # sets PHPVER
-      
-    - shell: echo "${PHPVER}"
+    - shell: source /usr/local/etc/library.sh && echo "${PHPVER}"
       register: phpver
 
+    - set_fact:
+        phpver: "{{ phpver.stdout }}"
+
+      ## CHECKS
     - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:get datadirectory
       register: srcdir
 
     - fail:
         msg: "Error reading data directory. Is NextCloud running and configured?"
-      when: not srcdir
+      when: not srcdir.stdout
 
     - stat:
         path: "{{ srcdir.stdout }}"
       register: folder_srcdir
 
-    - shell: echo -e "database directory {{ srcdir.stdout }} not found"
-      register: echo_out
-      when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
-
-    - debug:
-        msg: "{{ echo_out.stdout }}"
-      when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
-
     - fail:
-        msg: "database directory not found"
+        msg: "data directory {{ srcdir.stdout }} not found"
       when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
 
-    - shell: echo -e "INFO: data already there"
-      register: echo_out
-      when: srcdir.stdout == local_datadir
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
-      when: srcdir.stdout == local_datadir
+        msg: "INFO: data already there"
+      when: srcdir.stdout == datadir
 
     - meta: end_play
-      when: srcdir.stdout == local_datadir
+      when: srcdir.stdout == datadir
 
-    - shell: dirname "{{ local_datadir }}"
+      # checks
+    - shell: dirname "{{ datadir }}"
       register: basedir
 
     - stat:
         path: "{{ basedir.stdout }}"
       register: folder_basedir
 
-    - shell: echo "{{ basedir.stdout }} does not exist"
-      register: echo_out
+    - fail: 
+        msg: "{{ basedir.stdout }} does not exist"
       when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
 
-    - fail:
-        msg: "{{ echo_out.stdout }}"
-      when: not (folder_basedir.stat.exists and folder_basedir.stat.isdir)
+      # If the user chooses the root of the mountpoint, force a folder
+    - shell: mountpoint -q "{{ datadir }}"
+      register: mountp
 
-    - shell: mountpoint -q "{{ local_datadir }}"
-      when: basedir.stdout == local.datadir
+    - shell: echo "{{ datadir }}"
+      register: basedir
+      when: mountp.stdout
 
-    - shell: grep -q -e ext -e btrfs <( stat -fc%T "$BASEDIR" )
+    - shell: grep -q -e ext -e btrfs <( stat -fc%T "{{ basedir.stdout }}" )
       register: grep_out
 
     - fail:
         msg: "Only ext/btrfs filesystems can hold the data directory"
       when: not grep_out
 
-    - shell: sudo -u www-data test -x "$BASEDIR"
+    - shell: sudo -u www-data test -x "{{ basedir.stdout }}"
       register: test_out
 
     - fail:
         msg: "ERROR: the user www-data does not have access permissions over {{ basedir.stdout }} "
-      when: not test_out
+      when: not test_out.stdout
 
+      # backup possibly existing datadir
     - stat:
-        path: " {{ local_datadir }} "
+        path: " {{ datadir }} "
       register: folder_datadir
 
-    - shell: "{{ local_datadir }}-$( date "+%m-%d-%y" )"
+    - shell: echo "{{ datadir }}-$( date "+%m-%d-%y" )"
       register: bkp
       when: folder_datadir.stat.exists and folder_datadir.stat.isdir
 
-    - shell: local BKP="{{ local_datadir }}-$( date "+%m-%d-%y" )"
-      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
-
-    - shell: echo "INFO: {{ local_datadir }} is not empty. Creating backup $BKP"
-      register: echo_out
-      when: folder_datadir.stat.exists and folder_datadir.stat.isdir
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "INFO: {{ datadir }} is not empty. Creating backup {{ bkp.stdout }}"
       when: folder_datadir.stat.exists and folder_datadir.stat.isdir
 
-    - command: mv "{{ local_datadir }}" "{{ bkp.stdout }}"
+    - command: mv "{{ datadir }}" "{{ bkp.stdout }}"
       when: folder_datadir.stat.exists and folder_datadir.stat.isdir
 
+      # COPY
     - command: chdir:/var/www/nextcloud sudo -u www-data php occ maintenance:mode --on
 
-    - shell: echo "moving data directory from {{ srcdir.stdout }} to {{ local_datadir}}"
-      register: echo_out
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "moving data directory from {{ srcdir.stdout }} to {{ datadir }}"
 
+      # use subvolumes, if BTRFS  
     - shell: stat -fc%T "{{ basedir.stdout }}"
       register: comp1
 
-    - shell: btrfs
-      register: comp2
-
     - debug:
         msg: "BTRFS filesystem detected"
-      when: comp1.stdout == comp2.stdout
+      when: comp1.stdout == "btrfs"
 
-    - shell: btrfs subvolume create "{{ local_datadir }}"
+    - shell: btrfs subvolume create "{{ datadir }}"
       register: btrfs
-      when: comp1.stdout == comp2.stdout
+      when: comp1.stdout == "btrfs"
 
     - fail:
-      when: (comp1.stdout == comp2.stdout) && (not btrfs)
+      when: (comp1.stdout == "btrfs") && (not btrfs)
 
       #copy does not support reflink yet so we use shell for cp
-    - shell: cp --reflink=auto -raT "{{ srcdir.stdout }}" "{{ local_datadir }}" 
+    - shell: cp --reflink=auto -raT "{{ srcdir.stdout }}" "{{ datadir }}" 
       register: cp_status
 
     - fail:
         msg: "Copy failed"
-      when: cp_status
+      when: not cp_status.stdout
 
     - file:
-        path: "{{ local_datadir }}"
+        path: "{{ datadir }}"
         owner: www-data
         group: www-data
 
+      # tmp upload dir
     - stat:
-        path: "{{ local_datadir }}"/tmp
-      register: datadirtmp_results
+        path: "{{ datadir }}"/tmp
+      register: folder_datadirtmp
 
     - file:
-        path: "{{ local_datadir }}"/tmp
+        path: "{{ datadir }}"/tmp
         state: directory
-      when: not datadirtmp_results.stat.exists
+      when: not folder_datadirtmp.stat.exists
 
     - file:
-        path: "{{ local_datadir }}"/tmp
+        path: "{{ datadir }}"/tmp
         owner: www-data
         group: www-data
    
-    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set tempdirectory --value "{{ local_datadir }}"/tmp
-    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ phpver.stdout }}/cli/php.ini
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set tempdirectory --value "{{ datadir }}"/tmp
 
-    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ local_datadir }}/tmp|" /etc/php/{{ phpver.stdout }}/fpm/php.ini
+    - shell:  sed -i "s|^;\?upload_tmp_dir =.*$|uploadtmp_dir = {{ datadir }}/tmp|" /etc/php/{{ phpver }}/cli/php.ini
 
-    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ local_datadir }}/tmp|"     /etc/php/{{ phpver.stdout }}/fpm/php.ini
+    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ datadir }}/tmp|" /etc/php/{{ phpver }}/fpm/php.ini
 
-    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache={{ local_datadir }}/.opcache|" /etc/php/{{ phpver.stdout }}/mods-available/opcache.ini
+    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ datadir }}/tmp|"     /etc/php/{{ phpver }}/fpm/php.ini
 
+      # opcache dir
+    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache={{ datadir }}/.opcache|" /etc/php/{{ phpver }}/mods-available/opcache.ini
+
+      # update fail2ban logpath
     - stat:
         path: /etc/fail2ban/jail.local
       register: jail_local
 
-    - shell: sed -i "s|logpath  =.*nextcloud.log|logpath  = {{ local_datadir }}/nextcloud.log|" /etc/fail2ban/jail.local
+    - shell: sed -i "s|logpath  =.*nextcloud.log|logpath  = {{ datadir }}/nextcloud.log|" /etc/fail2ban/jail.local
       when: jail_local.stat.exists
 
-    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set datadirectory --value={{ local_datadir }}
+      # datadir
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set datadirectory --value={{ datadir }}
 
-    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set logfile --value="{{ local_datadir }}/nextcloud.log"
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:set logfile --value="{{ datadir }}/nextcloud.log"
 
     - command: chdir:/var/www/nextcloud sudo -u www-data php occ maintenance:mode --off

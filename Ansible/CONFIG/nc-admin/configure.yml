@@ -8,23 +8,17 @@
     local_user: "{{ lookup('env', 'USER') }}"
     local_confirm: "{{ lookup('env', 'CONFIRM') }}"
   tasks:
-    - shell: echo "empty password"
+    - fail:
+        msg: "empty password"
       when: local_pass == ""
 
-    - meta: end_play
-      when: local_pass == ""
-
-    - shell: echo "empty user"
+    - fail:
+        msg: "empty user"
       when: local_user == ""
 
-    - meta: end_play
-      when: local_user == ""
-
-    - shell: echo "passwords do not match"
+    - fail:
+        msg: "passwords do not match"
       when: local_pass == local_confirm
 
-    - meta: end_play
-      when: local_pass == local_confirm
-
-    - command: OC_PASS={{local_pass}} sudo -E -u www-data php /var/www/nextcloud/occ user:resetpassword --password-from-env {{local_user}}
+    - shell: OC_PASS={{local_pass}} sudo -E -u www-data php /var/www/nextcloud/occ user:resetpassword --password-from-env {{local_user}}
 

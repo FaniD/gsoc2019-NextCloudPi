@@ -5,37 +5,30 @@
   connection: local
   vars:
     dbadmin: ncadmin
-    local_datadir:  "{{ lookup('env','DATADIR') }}"
+    datadir: "{{ lookup('env','DATADIR') }}"
     adminuser: "{{ lookup('env','ADMINUSER') }}"
     adminpass: "{{ lookup('env, 'ADMINPASS') }}"
   tasks:
     - shell: source /usr/local/etc/library.sh && echo "${PHPVER}"
       register: phpver
 
-    - shell: echo "Setting up a clean Nextcloud instance... wait until message 'NC init done'"
-      register: echo_out
+    - set_fact:
+        phpver: "{{ phpver.stdout }}"
 
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "Setting up a clean Nextcloud instance... wait until message 'NC init done'"
 
       # checks
     - shell: grep "^requirepass" /etc/redis/redis.conf  | cut -d'' -f2
       register: redispass
 
-    - shell: echo "redis server without a password. Abort"
-      register: echo_out
+    - fail:
+        msg: "redis server without a password. Abort"
       when: redispass.stdout == ""
       
-    - fail:
-        msg: "{{ echo_out.stdout }}"
-      when: redispass.stdout == ""
-
       ## RE-CREATE DATABASE TABLE
-    - shell: echo "Setting up database..."
-      register: echo_out
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "Setting up database..."
 
     - shell: pgrep -c mysqld &>/dev/null
       register: condition
@@ -48,11 +41,8 @@
     - shell: pgrep -x mysqld &>/dev/null
       register: condition
 
-    - shell: echo "mariaDB process not found. Waiting..."
-      when: not condition
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "mariaDB process not found. Waiting..."
       when: not condition
 
     - stat:
@@ -92,8 +82,8 @@
 
     - file:
         path: /var/run/redis
-        status: directory
-      when: not redis and not redis_dir
+        state: directory
+      when: not redis and not redis_dir.stat.exists
 
     - file:
         path: /var/run/redis
@@ -111,11 +101,8 @@
       delay: 0.5
       ignore_errors: yes
 
-    - shell: echo "Setting up Nextcloud..."
-      register: echo_out
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "Setting up Nextcloud..."
 
     - file:
         path: /var/www/nextcloud/config/config.php
@@ -159,11 +146,11 @@
 
     - command: chdir:/var/www/nextcloud ncc config:system:set tempdirectory --value "{{ uploadtmpdir.stdout }}"
 
-    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ uploadtmpdir.stdout }}|" /etc/php/{{ phpver.stdout }}/cli/php.ini
+    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ uploadtmpdir.stdout }}|" /etc/php/{{ phpver }}/cli/php.ini
 
-    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ uploadtmpdir.stdout }}|" /etc/php/{{ phpver.stdout }}/fpm/php.ini
+    - shell: sed -i "s|^;\?upload_tmp_dir =.*$|upload_tmp_dir = {{ uploadtmpdir.stdout }}|" /etc/php/{{ phpver }}/fpm/php.ini
 
-    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ uploadtmpdir.stdout }}|"     /etc/php/{{ phpver.stdout }}/fpm/php.ini
+    - shell: sed -i "s|^;\?sys_temp_dir =.*$|sys_temp_dir = {{ uploadtmpdir.stdout }}|"     /etc/php/{{ phpver }}/fpm/php.ini
 
       # 4 Byte UTF8 support
     - command: chdir:/var/www/nextcloud ncc config:system:set mysql.utf8mb4 --type boolean --value="true"
@@ -197,12 +184,8 @@
       register: id
       when: logo
 
-    - shell: echo "failed to get ID"
-      register: echo_out
-      when: logo and id.stdout == ""
-
     - fail:
-        msg: "{{ echo_out.stdout }}"
+        msg: "{{ failed to get ID }}"
       when: logo and id.stdout == ""
 
     - stat:
@@ -286,8 +269,5 @@ EOF
       # TODO temporary workaround for https://github.com/nextcloud/server/pull/13358
     - command: chdir:/var/www/nextcloud ncc -n db:convert-filecache-bigint
     
-    - shell: echo "NC init done"
-      register: echo_out
-
     - debug:
-        msg: "{{ echo_out.stdout }}"
+        msg: "NC init done"
