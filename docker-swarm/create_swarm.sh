@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test="59"
+test=""
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
@@ -177,6 +177,7 @@ fi
 
 echo -e "Creating NCP stack on swarm system . . ."
 # Set manager to drain so that ncp replicas are distributed to workers
+# if you want manager to run NCP, comment out the command below
 docker node update --availability drain ${leader_name}
 
 # Stack NCP start
