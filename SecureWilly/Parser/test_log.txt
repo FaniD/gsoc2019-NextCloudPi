@@ -1,0 +1,7 @@
+[activation tests]
+activation opens = ok
+activation click = ok
+activation ends = ok
+ncp-web = ok
+first run wizard = ok
+
