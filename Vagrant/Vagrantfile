@@ -63,16 +63,15 @@ Vagrant.configure("2") do |config|
     # uncomment to install devel
     #sed -i 's|^BRANCH=gsoc2019-master|BRANCH=gsoc2019-devel|' install.sh ncp.sh
 
-    #Do alltogether so that the install.sh won't fail as it does sometimes when run alone
-    bash install.sh && source etc/library.sh && run_app_unsafe post-inst.sh && cd - && rm -r /tmp/nextcloudpi && systemctl disable sshd && poweroff
+    bash install.sh
 
     # cleanup
-#    source etc/library.sh
-#    run_app_unsafe post-inst.sh
-#    cd -
-#    rm -r /tmp/nextcloudpi
-#    systemctl disable sshd
-#    poweroff
+    source etc/library.sh
+    run_app_unsafe post-inst.sh
+    cd -
+    rm -r /tmp/nextcloudpi
+    systemctl disable sshd
+    poweroff
   SHELL
 
   # Provision the VM
