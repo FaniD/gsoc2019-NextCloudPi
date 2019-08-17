@@ -34,6 +34,7 @@ function reserved_ip() {
 # Pick the first IP available starting from the minimum IP of host's network
 # Not strict conditions - should be fixed to stop on max IP of network
 function pick_ip() {
+  local parent_ip=$1
   local host_ip=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
   local ip_mask=$(ip addr | grep ${host_ip} | awk '$1 ~ /^inet/ {print $2}')
   local prefix=$(cut -d'/' -f2 <<<"$ip_mask")
@@ -49,7 +50,7 @@ function pick_ip() {
     lsv=$(( lsv + 1 ))
     starting="${base}.${lsv}"
     try_ip="${base}.${lsv}"
-    if valid_ip $try_ip && ! reserved_ip $try_ip; then
+    if valid_ip $try_ip && ! reserved_ip $try_ip && [[ $parent_ip != $try_ip ]]; then
       echo "${try_ip}"
       return 0
     fi      
@@ -59,6 +60,28 @@ function pick_ip() {
 # Setup a new NCP VM
 # Either create it from scratch
 # Or clone an existing NCP vm
+
+while true; do
+  if [[ ! -f /usr/bin/vagrant ]]; then
+    echo -e "Before we proceed, please install vagrant package."
+    echo -e "Type enter when you're finished."
+    read ready
+    [[ $ready == "" ]] && break
+  else
+    break
+  fi
+done
+
+while true; do
+  if [[ ! -f /usr/bin/virtualbox ]]; then
+    echo -e "Before we proceed, please install virtual box package."
+    echo -e "Type enter when you're finished."
+    read ready
+    [[ $ready == "" ]] && break
+  else
+    break
+  fi
+done
 
 echo -e "\n===================================================\n"
 while true; do 
@@ -86,6 +109,20 @@ while true; do
   fi
 done
 
+parent_dir=""
+parent_ip=""
+[[ ($choice == "2") ]] && {
+  echo -e "\n===================================================\n"
+  while true; do 
+    echo -e "Give path of the origin NCP VM (absolute path)\nyou want to clone or type enter for default\n($(pwd)/NCP_VM):"
+    read parent_dir
+    [[ $parent_dir == "" ]] && parent_dir="$(pwd)/NCP_VM"
+    [[ -d ${parent_dir} ]] && break
+    echo -e "Path ${parent_dir} does not exist.\nPlease enter an existing directory of an NCP VM."
+  done
+  parent_ip="$(cat ${parent_dir}/Vagrantfile | grep public_network | cut -d'"' -f6)"
+}
+
 echo -e "\n===================================================\n"
 while true; do 
   echo -e "Please choose between using a specific IP\nor picking any IP available?"
@@ -94,7 +131,7 @@ while true; do
   if valid_ip $IP && ! reserved_ip $IP; then 
     break
   elif [[ $IP == "any" ]]; then
-    IP=$(pick_ip)
+    IP=$(pick_ip ${parent_ip})
     break
   else
     if reserved_ip $IP; then
@@ -107,9 +144,9 @@ done
 
 echo -e "\n===================================================\n"
 echo -e "Specify the resources of the new VM."
-echo -e "Memory (default 4096):"
+echo -e "Memory (default 2048):"
 read memory
-[[ $memory == "" ]] && memory=4096
+[[ $memory == "" ]] && memory=2048
 echo -e "Cores (default 2):"
 read cpus
 [[ $cpus == "" ]] && cpus=2
@@ -148,7 +185,8 @@ Vagrant.configure("2") do |config|
   vmname = "NCP Debian VM"
 
   #Box settings
-  config.vm.box = "debian/${debian_version}64"
+  #config.vm.box = "debian/${debian_version}64"
+  #config.vm.box = "${parent_dir}/package.box"
   config.vm.box_check_update = true
 
   #VM settings
@@ -198,7 +236,12 @@ cat <<'EOF' >> ${vm_dir}/Vagrantfile
     bash install.sh
 
     # cleanup
-    source etc/library.sh && run_app_unsafe post-inst.sh && cd - && rm -r /tmp/nextcloudpi && systemctl disable sshd
+    source etc/library.sh
+    run_app_unsafe post-inst.sh
+    cd -
+    rm -r /tmp/nextcloudpi
+#    systemctl disable sshd
+    poweroff
   SHELL
 
   # Provision the VM
@@ -213,32 +256,27 @@ else
     sed -i 's,#config.vm.network "private_network",config.vm.network "private_network",' ${vm_dir}/Vagrantfile
 fi
 
-[[ ($choice == "2") ]] && {
-  echo -e "\n===================================\n"
-  while true; do 
-    echo -e "Give path of the origin NCP VM (absolute path) you want\nto clone or type enter for default ($(pwd)/NCP_VM):"
-    read parent_dir
-    [[ $parent_dir == " " ]] && parent_dir="$(pwd)/NCP_VM"
-    [[ -f ${parent_dir} ]] && break
-    echo -e "Path ${parent_dir} does not exist. Please enter an existing directory of an NCP VM."
-  done
+[[ $choice == "1" ]] && sed -i '18s,#,,' ${vm_dir}/Vagrantfile
 
+[[ ($choice == "2") ]] && {
   cd ${parent_dir}
+  mkdir -p ${vm_dir}/.vagrant/machines/default/virtualbox
+  cp .vagrant/machines/default/virtualbox/private_key ${vm_dir}/.vagrant/machines/default/virtualbox/
+
   #Turn off parent VM
   echo -e "Parent VM will be temporarily turned off in order to get cloned.\n"
   vagrant halt 
   #Export a box from the parent VM
   vagrant package
 
-  cd ${vm_dir}
   sed -i 's,v.name = "NextCloudPi",v.name = "NextcloudPi_clone",' ${vm_dir}/Vagrantfile
-  sed -i "s,config.vm.box = "debian/${debian_version}64",config.vm.box = "${parent_dir}/package.box"," ${vm_dir}/Vagrantfile
-  sed -i '45,69s/^#*/#/' ${vm_dir}/Vagrantfile
-  cd ${parent_dir}
-  vagrant up
+  sed -i '19s,#,,' ${vm_dir}/Vagrantfile
+  sed -i '46,69s/^#*/#/' ${vm_dir}/Vagrantfile
 }
 
 # Setup origin VM, according to the existing Vagrantfile
 cd ${vm_dir}
 vagrant up
-echo -e "\nYour NCP VM is ready. Type https://${IP} to your web browser to activate it."
+
+echo -e "\n===================================================\n"
+echo -e "Your NCP VM is ready. Start the VM through VirtualBox\nand type https://${IP} to your web browser to activate it."
