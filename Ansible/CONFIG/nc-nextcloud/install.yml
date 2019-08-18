@@ -1,0 +1,194 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    - apt_release: "{{ release }}"
+    - redis_mem: "3gb"
+    - dbadmin: "ncadmin"
+    - dockerbuild: "{{ dockerbuild }}"
+  tasks:
+
+      # During build, this step is run before ncp.sh
+    - stat:
+        path: "/usr/lib/systemd/system/nc-provisioning.service"
+      register: nc-provisioning_status
+
+    - meta: end_play
+      when: nc-provisioning_status.stat.exists
+
+    - shell: source /usr/local/etc/library.sh && echo "${PHPVER}"
+      register: phpver
+
+    - set_fact:
+        phpver: "{{ phpver.stdout }}"
+
+      # Optional packets for Nextcloud and Apps 
+    - apt:
+        update_cache: yes
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: lbzip2
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: iputils-ping
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: jq
+
+      # for external storage
+    - apt:
+        force: yes
+        install_recommends: no
+        name: php-smbclient={{ apt_release }}
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: exfat-fuse={{ apt_release }}
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: exfat-utils={{ apt_release }}
+
+       # for gallery
+     - apt:
+        force: yes
+        install_recommends: no
+        name: php{{ phpver }}-exif={{ apt_release }}
+
+       # for gallery
+     - apt:
+        force: yes
+        install_recommends: no
+        name: imagemagick={{ apt_release }}
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: php{{ phpver }}-imagick={{ apt_release }}
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: ghostscript={{ apt_release }}
+
+      # POSTFIX
+    - apt:
+        force: yes
+        install_recommends: no
+        name: postfix
+      register: postfix_installation
+
+      # [armbian] workaround for bug - https://bugs.launchpad.net/ubuntu/+source/postfix/+bug/1531299
+    - debug:
+        msg: "[NCP] Please, ignore the previous postfix installation error ..."
+      when: not postfix_installation
+
+    - command: mv /usr/bin/newaliases /
+      when: not postfix_installation
+
+    - file:
+        src: "/bin/true"
+        dest: "/usr/bin/newaliases"
+        state: link
+      when: not postfix_installation
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: postfix
+      when: not postfix_installation
+
+    - file:
+        path: /usr/bin/newaliases
+        state: absent
+      when: not postfix_installation
+
+    - command: mv /newaliases /usr/bin/newaliases
+      when: not postfix_installation
+ 
+    - apt:
+        force: yes
+        install_recommends: no
+        name: redis-server
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: php{{ phpver }}-redis={{ apt_release }}
+
+    - shell: echo "/etc/redis/redis.conf"
+      register: redis_conf
+
+    - shell: echo "default"
+      register: redispass
+
+    - shell: sed -i "s|# unixsocket .*|unixsocket /var/run/redis/redis.sock|" "{{ redis_conf.stdout }}"
+
+    - shell: sed -i "s|# unixsocketperm .*|unixsocketperm 770|" "{{ redis_conf }}"
+
+    - shell: sed -i "s|# requirepass .*|requirepass $REDISPASS|" "{{ redis_conf }}"
+
+    - shell: sed -i 's|# maxmemory-policy .*|maxmemory-policy allkeys-lru|' "{{ redis_conf }}"
+
+    - shell: sed -i 's|# rename-command CONFIG ""|rename-command CONFIG ""|' "{{ redis_conf }}"
+
+    - shell: sed -i "s|^port.*|port 0|" "{{ redis_conf }}"
+  
+    - blockinfile:
+        path: "{{ redis_conf.stdout }}
+        block: |
+          maxmemory {{ redis_mem }}
+
+    - blockinfile:
+        path: "/etc/sysctl.conf"
+        block: |
+          vm.overcommit_memory = 1
+
+    - user:
+        name: www-data
+        group: redis
+
+    - service:
+        name: redis-server
+        state: restarted
+
+    - shell: update-rc.d redis-server enable
+
+    - service:
+        name: "php{{ phpver }}-fpm"
+        state: restarted
+
+      # service to randomize passwords on first boot
+    - file:
+        path: /usr/lib/systemd/system
+        state: directory
+
+    - blockinline:
+        path: /usr/lib/systemd/system/nc-provisioning.service
+        block: |
+          [Unit]
+          Description=Randomize passwords on first boot
+          Requires=network.target
+          After=mysql.service redis.service
+          [Service]
+          ExecStart=/bin/bash /usr/local/bin/ncp-provisioning.sh
+          [Install]
+          WantedBy=multi-user.target
+
+    - systemd:
+        name: nc-provisioning
+        enabled: yes
+      when: dockerbuild == '1'
+
+    - meta: end_play
+
