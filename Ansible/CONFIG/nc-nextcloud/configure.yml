@@ -6,6 +6,9 @@
   vars:
     beta: "{{ beta }}"
     nextcloud_ver: "{{ ver }}"
+    maxfilesize: "{{ maxfilesize }}"
+    memorylimit: "{{ memorylimit }}"
+    maxtransfertime: "{{ maxtransfertime }}"
   tasks:
       ## IF BETA SELECTED ADD "pre" to DOWNLOAD PATH
     - shell: echo "pre"
@@ -246,15 +249,27 @@
         ; disable .user.ini files for performance and workaround NC update bugs
         user_ini.filename =
         ; from Nextcloud .user.ini
-        upload_max_filesize=$MAXFILESIZE
-        post_max_size=$MAXFILESIZE
-        memory_limit=$MEMORYLIMIT
+        upload_max_filesize={{ maxfilesize }}
+        post_max_size={{ maxfilesize }}
+        memory_limit={{ memorylimit }}
         mbstring.func_overload=0
         always_populate_raw_post_data=-1
         default_charset='UTF-8'
         output_buffering=0
         ; slow transfers will be killed after this time
-        max_execution_time=$MAXTRANSFERTIME
-        max_input_time=$MAXTRANSFERTIME
+        max_execution_time={{ maxtransfertime }}
+        max_input_time={{ maxtransfertime }}
 
-   - 
+     ## SET CRON
+   - lineinfile:
+       path: /tmp/crontab_http
+       line: */15  *  *  *  * php -f /var/www/nextcloud/cron.php
+
+   - command: crontab -u www-data /tmp/crontab_http
+
+   - file:
+       path: /tmp/crontab_http
+       state: absent
+
+   - debug:
+       msg: "Don't forget to run nc-init"
