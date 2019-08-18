@@ -1,0 +1,89 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+#
+# Vagrantfile for the NCP Debian VM
+#
+# Instructions: vagrant up; vagrant ssh
+#
+# Notes: User/Pass is ubnt/ubnt.
+# $HOME is accessible as /external. CWD is accessible as /cwd
+#
+
+Vagrant.configure("2") do |config|
+
+  vmname = "NCP Debian VM Clone"
+
+  #Box settings
+  #config.vm.box = "debian/buster64"
+  config.vm.box = "/home/fanilicious/NCP/ellak/gsoc2019-NextCloudPi/Vagrant/NCP_VM/package.box"
+  config.vm.box_check_update = true
+
+  #VM settings
+  config.vm.hostname = "ncp-vm"
+
+  #Networking
+
+  #Public IP
+  config.vm.network "public_network", bridge: "wlp4s0", ip: "192.168.1.3"
+
+  #Private IP
+  #config.vm.network "private_network", ip: "192.168.1.3"
+
+  #config.ssh.private_key_path = '/home/fanilicious/NCP/ellak/gsoc2019-NextCloudPi/Vagrant/NCP_VM/.vagrant/machines/default/virtualbox/private_key'
+  config.ssh.insert_key = false
+
+  #Provider settings
+  config.vm.provider "virtualbox" do |v|
+    #Resources
+    v.memory = 2048
+    v.cpus = 2
+
+    #VM name
+    v.name = "NextcloudPi_clone"
+
+  end
+
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  $script = <<-SHELL
+#    sudo su
+#    set -e
+#    BRANCH=master
+#    #BRANCH=devel  # uncomment to install devel
+#    apt-get update
+#    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
+#
+#    # indicate that this will be an image build
+#    touch /.ncp-image
+#
+#    # install
+#    git clone -b "$BRANCH" https://github.com/nextcloud/nextcloudpi.git /tmp/nextcloudpi
+#    cd /tmp/nextcloudpi
+#
+#    # uncomment to install devel
+#    #sed -i 's|^BRANCH=master|BRANCH=devel|' install.sh ncp.sh
+#
+#    bash install.sh
+#
+#    # cleanup
+#    source etc/library.sh
+#    run_app_unsafe post-inst.sh
+#    cd -
+#    rm -r /tmp/nextcloudpi
+
+    # Create insecure vagrant key so that VM can be cloned
+#    mkdir -p /home/vagrant/.ssh
+#    chmod 0700 /home/vagrant/.ssh
+#    wget --no-check-certificate \
+#    https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub \
+#    -O /home/vagrant/.ssh/authorized_keys
+#    chmod 0600 /home/vagrant/.ssh/authorized_keys
+#    chown -R vagrant /home/vagrant/.ssh
+
+    poweroff
+  SHELL
+
+  # Provision the VM
+  config.vm.provision "shell", inline: $script
+
+end

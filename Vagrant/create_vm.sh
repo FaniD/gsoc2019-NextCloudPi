@@ -34,23 +34,36 @@ function reserved_ip() {
 # Pick the first IP available starting from the minimum IP of host's network
 # Not strict conditions - should be fixed to stop on max IP of network
 function pick_ip() {
-  local parent_ip=$1
-  local host_ip=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-  local ip_mask=$(ip addr | grep ${host_ip} | awk '$1 ~ /^inet/ {print $2}')
-  local prefix=$(cut -d'/' -f2 <<<"$ip_mask")
+  local networking=$1
+  local parentIP=$2
 
-  IFS=. read -r io1 io2 io3 io4 <<< "$host_ip"
-  IFS=. read -r xx mo1 mo2 mo3 mo4 <<< $(for a in $(seq 1 32); do if [ $(((a - 1) % 8)) -eq 0 ]; then echo -n .; fi; if [ $a -le $prefix ]; then echo -n 1; else echo -n 0; fi; done)
-  local net_addr="$((io1 & mo1)).$((io2 & mo2)).$((io3 & mo3)).$((io4 & mo4))"
+  if [[ $networking == "1" ]]; then
+    # Public networking
 
-  local base="${io1}.${io2}.${io3}"
-  local lsv=$(cut -d'.' -f4 <<<"$net_addr")
+    local hostIP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+    local ip_mask=$(ip addr | grep ${hostIP} | awk '$1 ~ /^inet/ {print $2}')
+    local prefix=$(cut -d'/' -f2 <<<"$ip_mask")
+
+    IFS=. read -r io1 io2 io3 io4 <<< "$hostIP"
+    IFS=. read -r xx mo1 mo2 mo3 mo4 <<< $(for a in $(seq 1 32); do if [ $(((a - 1) % 8)) -eq 0 ]; then echo -n .; fi; if [ $a -le $prefix ]; then echo -n 1; else echo -n 0; fi; done)
+    local net_addr="$((io1 & mo1)).$((io2 & mo2)).$((io3 & mo3)).$((io4 & mo4))"
+
+    local base="${io1}.${io2}.${io3}"
+    local lsv=$(cut -d'.' -f4 <<<"$net_addr")
+
+  else
+    # Private networking
+
+    # Default DHCP range. This may have been changed manually
+    local base="172.28.128"
+    local lsv=3
+  fi
 
   while [ $lsv -le 255 ]; do
     lsv=$(( lsv + 1 ))
     starting="${base}.${lsv}"
     try_ip="${base}.${lsv}"
-    if valid_ip $try_ip && ! reserved_ip $try_ip && [[ $parent_ip != $try_ip ]]; then
+    if valid_ip $try_ip && ! reserved_ip $try_ip && [[ $parentIP != $try_ip ]]; then
       echo "${try_ip}"
       return 0
     fi      
@@ -112,6 +125,7 @@ done
 parent_dir=""
 parent_ip=""
 [[ ($choice == "2") ]] && {
+  pack=2
   echo -e "\n===================================================\n"
   while true; do 
     echo -e "Give path of the origin NCP VM (absolute path)\nyou want to clone or type enter for default\n($(pwd)/NCP_VM):"
@@ -121,6 +135,19 @@ parent_ip=""
     echo -e "Path ${parent_dir} does not exist.\nPlease enter an existing directory of an NCP VM."
   done
   parent_ip="$(cat ${parent_dir}/Vagrantfile | grep public_network | cut -d'"' -f6)"
+
+  if [[ -f ${parent_dir}/package.box ]]; then
+    echo -e "\n===================================================\n"
+    while true; do
+      echo -e "A package.box already exists.\nDo you want to use the existing box or create a new? (1/2)"
+      echo -e "(1) Use existing box"
+      echo -e "(2) Create new box"
+      read pack
+      if [[ $pack == "1" || $pack == "2" ]]; then
+        break
+      fi
+    done
+  fi
 }
 
 echo -e "\n===================================================\n"
@@ -131,7 +158,7 @@ while true; do
   if valid_ip $IP && ! reserved_ip $IP; then 
     break
   elif [[ $IP == "any" ]]; then
-    IP=$(pick_ip ${parent_ip})
+    IP=$(pick_ip ${network} ${parent_ip})
     break
   else
     if reserved_ip $IP; then
@@ -179,6 +206,16 @@ cat <<'EOF' > ${vm_dir}/Vagrantfile
 
 EOF
 
+touch ${vm_dir}/vagrant_insecure_key
+wget --no-check-certificate \
+https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant \
+-O ${vm_dir}/vagrant_insecure_key
+
+touch ${vm_dir}/vagrant_insecure_key.pub
+wget --no-check-certificate \
+https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
+-O ${vm_dir}/vagrant_insecure_key.pub
+
 cat <<EOF >> ${vm_dir}/Vagrantfile
 Vagrant.configure("2") do |config|
 
@@ -199,6 +236,10 @@ Vagrant.configure("2") do |config|
 
   #Private IP
   #config.vm.network "private_network", ip: "${IP}"
+
+  config.vm.provision "file", source: "${vm_dir}/vagrant_insecure_key.pub", destination: "~/.ssh/authorized_keys"
+  config.ssh.private_key_path = '${vm_dir}/vagrant_insecure_key'
+  config.ssh.insert_key = false
 
   #Provider settings
   config.vm.provider "virtualbox" do |v|
@@ -240,7 +281,16 @@ cat <<'EOF' >> ${vm_dir}/Vagrantfile
     run_app_unsafe post-inst.sh
     cd -
     rm -r /tmp/nextcloudpi
-#    systemctl disable sshd
+
+    # Create insecure vagrant key so that VM can be cloned
+#    mkdir -p /home/vagrant/.ssh
+#    chmod 0700 /home/vagrant/.ssh
+#    wget --no-check-certificate \
+#    https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
+#    -O /home/vagrant/.ssh/authorized_keys
+#    chmod 0600 /home/vagrant/.ssh/authorized_keys
+#    chown -R vagrant /home/vagrant/.ssh
+
     poweroff
   SHELL
 
@@ -259,24 +309,28 @@ fi
 [[ $choice == "1" ]] && sed -i '18s,#,,' ${vm_dir}/Vagrantfile
 
 [[ ($choice == "2") ]] && {
-  cd ${parent_dir}
-  mkdir -p ${vm_dir}/.vagrant/machines/default/virtualbox
-  cp .vagrant/machines/default/virtualbox/private_key ${vm_dir}/.vagrant/machines/default/virtualbox/
 
-  #Turn off parent VM
-  echo -e "Parent VM will be temporarily turned off in order to get cloned.\n"
-  vagrant halt 
-  #Export a box from the parent VM
-  vagrant package
+  if [[ $pack == "2" ]]; then	
+    cd ${parent_dir}
+    #Turn off parent VM
+    echo -e "Parent VM will be temporarily turned off in order to\nget cloned.\n"
+    vagrant halt 
+    #Export a box from the parent VM
+    vagrant package 
+  fi
 
+  sed -i 's,vmname = "NCP Debian VM",vmname = "NCP Debian VM Clone",' ${vm_dir}/Vagrantfile
   sed -i 's,v.name = "NextCloudPi",v.name = "NextcloudPi_clone",' ${vm_dir}/Vagrantfile
+  #sed -i 's,#config.ssh.private_key_path,config.ssh.private_key_path,' ${vm_dir}/Vagrantfile
+  #sed -i 's,#config.ssh.insert_key,config.ssh.insert_key,' ${vm_dir}/Vagrantfile
   sed -i '19s,#,,' ${vm_dir}/Vagrantfile
-  sed -i '46,69s/^#*/#/' ${vm_dir}/Vagrantfile
+  sed -i '50,83s/^#*/#/' ${vm_dir}/Vagrantfile
 }
 
-# Setup origin VM, according to the existing Vagrantfile
+# Setup VM
+echo -e "\nVM setting up . . .\nPlease wait . . ."
 cd ${vm_dir}
 vagrant up
 
 echo -e "\n===================================================\n"
-echo -e "Your NCP VM is ready. Start the VM through VirtualBox\nand type https://${IP} to your web browser to activate it."
+echo -e "Your NCP VM is ready. Start the VM through VirtualBox\nand type https://${IP} to your web browser\nto activate it.\n"
