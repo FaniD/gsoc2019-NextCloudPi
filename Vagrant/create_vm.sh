@@ -237,9 +237,10 @@ Vagrant.configure("2") do |config|
   #Private IP
   #config.vm.network "private_network", ip: "${IP}"
 
-  config.vm.provision "file", source: "${vm_dir}/vagrant_insecure_key.pub", destination: "~/.ssh/authorized_keys"
-  config.ssh.private_key_path = '${vm_dir}/vagrant_insecure_key'
+  #config.vm.provision "file", source: "${vm_dir}/vagrant_insecure_key.pub", destination: "~/.ssh/authorized_keys"
+  #config.ssh.private_key_path = '${vm_dir}/vagrant_insecure_key'
   config.ssh.insert_key = false
+  #config.ssh.forward_agent = true
 
   #Provider settings
   config.vm.provider "virtualbox" do |v|
@@ -283,13 +284,13 @@ cat <<'EOF' >> ${vm_dir}/Vagrantfile
     rm -r /tmp/nextcloudpi
 
     # Create insecure vagrant key so that VM can be cloned
-#    mkdir -p /home/vagrant/.ssh
-#    chmod 0700 /home/vagrant/.ssh
-#    wget --no-check-certificate \
-#    https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
-#    -O /home/vagrant/.ssh/authorized_keys
-#    chmod 0600 /home/vagrant/.ssh/authorized_keys
-#    chown -R vagrant /home/vagrant/.ssh
+    mkdir -p /home/vagrant/.ssh
+    chmod 0700 /home/vagrant/.ssh
+    wget --no-check-certificate \
+    https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
+    -O /home/vagrant/.ssh/authorized_keys
+    chmod 0600 /home/vagrant/.ssh/authorized_keys
+    chown -R vagrant /home/vagrant/.ssh
 
     poweroff
   SHELL
@@ -316,7 +317,7 @@ fi
     echo -e "Parent VM will be temporarily turned off in order to\nget cloned.\n"
     vagrant halt 
     #Export a box from the parent VM
-    vagrant package 
+    vagrant package --base NextCloudPi
   fi
 
   sed -i 's,vmname = "NCP Debian VM",vmname = "NCP Debian VM Clone",' ${vm_dir}/Vagrantfile
@@ -324,7 +325,7 @@ fi
   #sed -i 's,#config.ssh.private_key_path,config.ssh.private_key_path,' ${vm_dir}/Vagrantfile
   #sed -i 's,#config.ssh.insert_key,config.ssh.insert_key,' ${vm_dir}/Vagrantfile
   sed -i '19s,#,,' ${vm_dir}/Vagrantfile
-  sed -i '50,83s/^#*/#/' ${vm_dir}/Vagrantfile
+  sed -i '51,84s/^#*/#/' ${vm_dir}/Vagrantfile
 }
 
 # Setup VM
