@@ -4,12 +4,19 @@
 test="${1:-""}"
 
 echo -e "\n================================================\n"
-echo -e "Choose one of the options below:"
-echo -e "(1) I will use an existing machine"
-echo -e "\tChoosing this option, you will have to provide some\n\tinfo about the machine in order to add the node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for the machine is to have\n\tdocker installed and ssh server enabled."
-echo -e "(2) Vagrant option\n\tA new VM will be created automatically and added to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof the VM through the Vagrantfile provided"
-echo -e "\nType 1 or 2:"
-read option
+while :; do
+  echo -e "Choose one of the options below:"
+  echo -e "(1) I will use an existing machine"
+  echo -e "\tChoosing this option, you will have to provide some\n\tinfo about the machine in order to add the node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for the machine is to have\n\tdocker installed and ssh server enabled."
+  echo -e "(2) Vagrant option\n\tA new VM will be created automatically and added to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof the VM through the Vagrantfile provided"
+  echo -e "\nType 1 or 2:"
+  read option
+  if [[ $option == "1" || $option == "2" ]]; then
+    break
+  else
+    echo -e "Wrong input..."
+  fi
+done
 
 leader_name=$(hostname)
 leader_IP=$(docker node inspect self --format '{{ .Status.Addr  }}')
@@ -17,15 +24,22 @@ worker_id=$(ls vagrant_workers | wc -l)
 
 if [[ $option == 1 ]]; then
   echo -e "\n================================================\n"
-  echo -e "\nTo fully automate the whole process, manager's public\nkey should be added to authorized_keys file on worker node."
-  echo -e "You can either add the public key manually or \nprovide the credentials of the node to fix it automatically.\n"
-  echo -e "Choose one of the following options:\n"
-  echo -e "(1) Manually add manager's public key to authorized_keys files on worker node."
-  echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\tMake sure that the sudoer user provided should be able\n\tto execute privileged actions without asking for password in\n\torder for the script to work automatically."
-  echo -e "(2) Fix it for me automatically."
-  echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton worker node.\n"
-  echo -e "Type 1 or 2:"
-  read ssh_option
+  while :; do
+    echo -e "\nTo fully automate the whole process, manager's public\nkey should be added to authorized_keys file on worker node."
+    echo -e "You can either add the public key manually or \nprovide the credentials of the node to fix it automatically.\n"
+    echo -e "Choose one of the following options:\n"
+    echo -e "(1) Manually add manager's public key to authorized_keys files on worker node."
+    echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\tMake sure that the sudoer user provided should be able\n\tto execute privileged actions without asking for password in\n\torder for the script to work automatically."
+    echo -e "(2) Fix it for me automatically."
+    echo -e "\tThis option requires to provide as input for worker node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton worker node.\n"
+    echo -e "Type 1 or 2:"
+    read ssh_option
+    if [[ $ssh_option == "1" || $ssh_option == "2" ]]; then
+      break
+    else
+      echo -e "Wrong input..."
+    fi
+  done
 
   echo -e "\n================================================\n"
   echo -e "\nProvide worker node's information below as asked:"
@@ -94,7 +108,7 @@ if [[ $option == 1 ]]; then
   fi
   ssh ${node_user}@${node_ip} "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
 else
-  ./new_worker_vagrant.sh ${leader_IP}
+  ./new_worker_vagrant.sh
   cd vagrant_workers/worker${worker_id}
   vagrant up
   vagrant ssh -c "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"

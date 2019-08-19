@@ -1,48 +1,81 @@
 #!/bin/bash
 
+source IP_library.sh
+
+# Leave this empty if you only need one docker swarm.
+# If you want to have more docker swarms use a test id.
 test=""
 
 # System setup: Manager and Worker nodes
 # In case of multiple IPs, user is asked to provide one or one will be picked randomly
 # fix it to identify if there are multiple IPs on host
 echo -e "\n================================================\n"
-echo -e "Specify leader's IP address or type 'any' to pick\nany listening address of the system (<IP>/any):"
-read leader
-if [[ $leader == "any" ]]; then 
-  docker node ls 2> /dev/null | grep "Leader"
-  leader_IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-  if [ $? -ne 0 ]; then
-    echo "IP ${leader_IP} on device is already used on a swarm system. Re-run and specify another one."
-    exit 0
+while :; do
+  echo -e "Specify leader's IP address or type 'any' to pick\nany listening address of the system (<IP>/any):"
+  read leader
+  if [[ $leader == "any" ]]; then
+    leader_IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+    #docker node ls 2> /dev/null | grep "Leader"
+    #if [ $? -ne 0 ]; then
+    #  echo "IP ${leader_IP} on device is already used on a swarm system. Re-run and specify another one."
+    #  exit 0
+    #fi
+    break
+  elif valid_ip $leader ; then
+    leader_IP=$leader
+    break
+  else
+    echo -e "Not valid IP..."
   fi
-else 
-  leader_IP=$leader
-fi
+done
 leader_name=$(hostname)
 
 echo -e "\n================================================\n"
-echo -e "Choose one of the options described below.\n"
-echo -e "(1) I want to use existing machines as workers"
-echo -e "\tChoosing this option, you will have to provide some\n\tinfo about each node in order to add every node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for these machines is to have\n\tdocker installed and ssh server enabled."
-echo -e "(2) Vagrant option\n\tAutomatically create new VMs and add them to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof each VM through the Vagrantfile provided."
-echo -e "\nType 1 or 2:"
-read option
+while :; do
+  echo -e "Choose one of the options described below.\n"
+  echo -e "(1) I want to use existing machines as workers"
+  echo -e "\tChoosing this option, you will have to provide some\n\tinfo about each node in order to add every node to\n\tswarm system and gluster cluster by following the\n\tinsctructions provided.\n\tThe only requirement for these machines is to have\n\tdocker installed and ssh server enabled."
+  echo -e "(2) Vagrant option\n\tAutomatically create new VMs and add them to swarm\n\tand gluster cluster. Feel free to change the specs\n\tof each VM through the Vagrantfile provided."
+  echo -e "\nType 1 or 2:"
+  read option
+  if [[ $option == "1" || $option == "2" ]]; then
+    break
+  else
+    echo -e "Wrong input..."
+  fi
+done
+
 echo -e "\n================================================\n"
-echo "Enter number of workers:"
-read num_workers
+re='^[0-9]+$'
+while :; do
+  echo "Enter number of workers:"
+  read num_workers
+  if ! [[ $num_workers =~ $re ]] ; then
+    echo "error: Not a number"
+  else
+    break
+  fi
+done
 replicas=$((num_workers + 1))
 
 if [[ $option == 1 ]]; then
   echo -e "\n================================================\n"
-  echo -e "\nTo fully automate the whole process, manager's public\nkey should be added to authorized_keys file on every\nworker node."
-  echo -e "You can either add the public key manually or \nprovide the credentials for each node to fix it automatically.\n"
-  echo -e "Choose one of the following options:\n"
-  echo -e "(1) Manually add manager's public key to authorized_keys files on every node."
-  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\tMake sure that the sudoer user provided should be able\n\tto execute privileged actions without asking for password in\n\torder for the script to work automatically."
-  echo -e "(2) Fix it for me automatically."
-  echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton every node.\n"
-  echo -e "Type 1 or 2:"
-  read ssh_option
+  while :; do
+    echo -e "\nTo fully automate the whole process, manager's public\nkey should be added to authorized_keys file on every\nworker node."
+    echo -e "You can either add the public key manually or \nprovide the credentials for each node to fix it automatically.\n"
+    echo -e "Choose one of the following options:\n"
+    echo -e "(1) Manually add manager's public key to authorized_keys files on every node."
+    echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\tMake sure that the sudoer user provided should be able\n\tto execute privileged actions without asking for password in\n\torder for the script to work automatically."
+    echo -e "(2) Fix it for me automatically."
+    echo -e "\tThis option requires to provide as input for each node:\n\t* IP address\n\t* Username (a sudoer user)\n\t* Password\n\tMake sure PasswordAuthentication is enabled in /etc/ssh/sshd_config\n\ton every node.\n"
+    echo -e "Type 1 or 2:"
+    read ssh_option
+    if [[ $ssh_option == "1" || $ssh_option == "2" ]]; then
+      break
+    else
+      echo -e "Wrong input..."
+    fi
+  done
   
   echo -e "\n================================================\n"
   echo -e "\nProvide worker node's information below as asked:"
@@ -167,7 +200,7 @@ else
   # Create vagrant workers and add to swarm
   echo -e "Creating vagrant workers..."
   for(( i=1; i<="$num_workers"; i++)); do
-    ./new_worker_vagrant.sh ${leader_IP}
+    ./new_worker_vagrant.sh
     cd vagrant_workers/worker${i}
     vagrant up
     vagrant ssh -c "docker swarm join --token ${worker_join_token} ${leader_IP}:2377"
@@ -242,3 +275,7 @@ else
     fi
   done
 fi
+
+echo -e "\n================================================\n"
+echo -e "Swarm system is up.\nEach worker can use its NCP through his IP - make sure you add it to the trusted domains.\nEverything inside swarm directory will be replicated and distributed over all nodes.\nUse nc-scan periodically to see replicated files through web-panel or use nc-auto-scan just once."
+
