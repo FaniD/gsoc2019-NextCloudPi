@@ -127,28 +127,109 @@ parent_ip=""
 [[ ($choice == "2") ]] && {
   pack=2
   echo -e "\n===================================================\n"
-  while true; do 
-    echo -e "Give path of the origin NCP VM (absolute path)\nyou want to clone or type enter for default\n($(pwd)/NCP_VM):"
-    read parent_dir
-    [[ $parent_dir == "" ]] && parent_dir="$(pwd)/NCP_VM"
-    [[ -d ${parent_dir} ]] && break
-    echo -e "Path ${parent_dir} does not exist.\nPlease enter an existing directory of an NCP VM."
-  done
-  parent_ip="$(cat ${parent_dir}/Vagrantfile | grep public_network | cut -d'"' -f6)"
+  while true; do
+    echo -e "Specify the parent NCP VM you wish to clone, by providing:"
+    echo -e "(1) Absolute path to parent's VM Vagrantfile"
+    echo -e "(2) Parent VM's VirtualBox Name"
+    echo -e "Type 1 or 2:"
+    read parent_option
+    if [[ $parent_option == "1" || $parent_option == "2" ]]; then
+      break
+    else
+      echo -e "Wrong input..."
+    fi
+#  done
 
-  if [[ -f ${parent_dir}/package.box ]]; then
-    echo -e "\n===================================================\n"
-    while true; do
-      echo -e "A package.box already exists.\nDo you want to use the existing box or create a new? (1/2)"
-      echo -e "(1) Use existing box"
-      echo -e "(2) Create new box"
-      read pack
-      if [[ $pack == "1" || $pack == "2" ]]; then
+  
+    [[ $parent_option == "1" ]] && {
+      echo -e "\n===================================================\n"
+      echo -e "Give path of the parent's VM Vagrantfile (absolute path)\nyou want to clone or type enter for default\n($(pwd)/NCP_VM):"
+      echo -e "Keep in mind that the parent VM has to be created first.\nIf you haven't created it already, run vagrant up."
+      read parent_dir
+      [[ $parent_dir == "" ]] && parent_dir="$(pwd)/NCP_VM"
+      [[ -d ${parent_dir} ]] && [[ -f ${parent_dir}/Vagrantfile ]] && break
+      if [[ ! -d ${parent_dir} ]]; then
+        echo -e "Path ${parent_dir} does not exist.\nPlease enter an existing directory."
+      elif [[ ! -f ${parent_dir}/Vagrantfile ]]; then # Vagrantfile does not exist
+        echo -e "Path ${parent_dir} does not contain a Vagrantfile."
+      fi
+ # done
+      parent_ip="$(cat ${parent_dir}/Vagrantfile | grep public_network | cut -d'"' -f6)"
+
+      if [[ -f ${parent_dir}/package.box ]]; then
+        echo -e "\n===================================================\n"
+        while true; do
+          echo -e "A box of this VM already exists.\nDo you want to use the existing box or create a new? (1/2)"
+          echo -e "(1) Use existing box"
+          echo -e "(2) Create new box"
+          read pack
+          if [[ $pack == "1" ]]; then
+	    # Since the package exist it may be newer than the box added as metadata
+	    # So we clean metadata and use the box
+	    vagrant box remove ${parent_dir}/package.box
+            break
+	  elif [[ $pack == "2" ]]; then
+	    # Delete the box and clean its metadata
+	    rm ${parent_dir}/package.box
+            vagrant box remove ${parent_dir}/package.box
+	    break
+	  else
+	    echo -e "Wrong input..."
+          fi
+        done
         break
       fi
-    done
-  fi
-}
+
+      # Package may contain newer version (somebody could have just run vagrant package)
+      # But metadata of the package could only be added after the package was created, if
+      # somebody run vagrant up. So it's a double catch actually..
+      vagrant_box_added=$(vagrant box list | grep ${parent_dir}/package.box | wc -l)
+      if [[ $vagrant_box_added == 1 ]]; then
+        echo -e "\n===================================================\n"
+        while true; do
+          echo -e "A box of this VM is already added in Vagrant.\nDo you want to use the existing box or create a new? (1/2)"
+          echo -e "(1) Use existing box"
+          echo -e "(2) Create new box"
+          read metadata
+          if [[ $metadata == "1" ]]; then
+            # Box did not exist, so we just keep metadata
+            break
+	  elif [[ $metadata == "2" ]]; then
+	    # Clean metadata, box did not exist anyway
+	    vagrant box remove ${parent_dir}/package.box
+            break
+          fi
+        done
+      fi
+    }
+
+    if [[ $parent_option == 2 ]]; then
+      # This option needs name of VM in order to clone
+      #$VBoxManage_exists && VBoxManage startvm ${VBox_name} --type headless
+      echo -e "\n===================================================\n"
+      echo -e "Enter VirtualBox VM's name:"
+      read VBox_name
+      if [[ -f /usr/bin/VBoxManage ]]; then
+	name_exists=$(VBoxManage list vms | awk '{print $1}' | grep "\"${VBox_name}"\"| wc -l)
+        if [[ $name_exists != 1 ]]; then
+	  echo -e "${VBox_name} does not correspond to an existing VM..."
+        else
+          VBoxManage startvm ${VBox_name} --type headless
+	  break
+	fi
+	vagrant box remove ${VBox_name}
+      else
+        echo -e "In order to proceed the parent VM should be running.\nPlease make sure to start it if it's not running.\nPress ready when you're finished."
+	while true; do
+	  read ready
+	  if [[ $ready == "Ready" || $ready == "ready" ]]; then
+	    break
+	  fi
+	done
+      fi
+      break
+    fi        
+done
 
 echo -e "\n===================================================\n"
 while true; do 
@@ -211,15 +292,19 @@ wget --no-check-certificate \
 https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant \
 -O ${vm_dir}/vagrant_insecure_key
 
-touch ${vm_dir}/vagrant_insecure_key.pub
-wget --no-check-certificate \
-https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
--O ${vm_dir}/vagrant_insecure_key.pub
+#touch ${vm_dir}/vagrant_insecure_key.pub
+#wget --no-check-certificate \
+#https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
+#-O ${vm_dir}/vagrant_insecure_key.pub
 
 cat <<EOF >> ${vm_dir}/Vagrantfile
 Vagrant.configure("2") do |config|
 
   vmname = "NCP Debian VM"
+
+  # First boot use vagrant insecure key
+  config.ssh.private_key_path = '${vm_dir}/vagrant_insecure_key'
+  config.ssh.insert_key = false
 
   #Box settings
   #config.vm.box = "debian/${debian_version}64"
@@ -237,51 +322,46 @@ Vagrant.configure("2") do |config|
   #Private IP
   #config.vm.network "private_network", ip: "${IP}"
 
-  #config.vm.provision "file", source: "${vm_dir}/vagrant_insecure_key.pub", destination: "~/.ssh/authorized_keys"
-  #config.ssh.private_key_path = '${vm_dir}/vagrant_insecure_key'
-  config.ssh.insert_key = false
-  #config.ssh.forward_agent = true
-
   #Provider settings
   config.vm.provider "virtualbox" do |v|
     #Resources
     v.memory = ${memory}
     v.cpus = ${cpus}
-
-    #VM name
+    # VM name
     v.name = "NextCloudPi"
 
   end
 
   config.vm.synced_folder '.', '/vagrant', disabled: true
+  #config.ssh.forward_agent = true
 EOF
 
 cat <<'EOF' >> ${vm_dir}/Vagrantfile
   $script = <<-SHELL
-    sudo su
-    set -e
-    BRANCH=master
+#    sudo su
+#    set -e
+#    BRANCH=master
     #BRANCH=devel  # uncomment to install devel
-    apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
+#    apt-get update
+#    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
 
     # indicate that this will be an image build
-    touch /.ncp-image
+#    touch /.ncp-image
 
     # install
-    git clone -b "$BRANCH" https://github.com/nextcloud/nextcloudpi.git /tmp/nextcloudpi
-    cd /tmp/nextcloudpi
+#    git clone -b "$BRANCH" https://github.com/nextcloud/nextcloudpi.git /tmp/nextcloudpi
+#    cd /tmp/nextcloudpi
 
     # uncomment to install devel
     #sed -i 's|^BRANCH=master|BRANCH=devel|' install.sh ncp.sh
 
-    bash install.sh
+#    bash install.sh
 
     # cleanup
-    source etc/library.sh
-    run_app_unsafe post-inst.sh
-    cd -
-    rm -r /tmp/nextcloudpi
+#    source etc/library.sh
+#    run_app_unsafe post-inst.sh
+#    cd -
+#    rm -r /tmp/nextcloudpi
 
     # Create insecure vagrant key so that VM can be cloned
     mkdir -p /home/vagrant/.ssh
@@ -292,7 +372,7 @@ cat <<'EOF' >> ${vm_dir}/Vagrantfile
     chmod 0600 /home/vagrant/.ssh/authorized_keys
     chown -R vagrant /home/vagrant/.ssh
 
-    poweroff
+#    poweroff
   SHELL
 
   # Provision the VM
@@ -307,25 +387,34 @@ else
     sed -i 's,#config.vm.network "private_network",config.vm.network "private_network",' ${vm_dir}/Vagrantfile
 fi
 
-[[ $choice == "1" ]] && sed -i '18s,#,,' ${vm_dir}/Vagrantfile
+[[ $choice == "1" ]] && sed -i '20s,#,,' ${vm_dir}/Vagrantfile
 
 [[ ($choice == "2") ]] && {
+  if [[ $parent_option == 1 ]]; then
+    box="${parent_dir}/package.box"
+  else
+    box="${vm_dir}/package.box"
+  fi
 
-  if [[ $pack == "2" ]]; then	
+  if [[ $parent_choice == "1" ]]; then
     cd ${parent_dir}
     #Turn off parent VM
     echo -e "Parent VM will be temporarily turned off in order to\nget cloned.\n"
-    vagrant halt 
-    #Export a box from the parent VM
-    vagrant package --base NextCloudPi
+    vagrant halt
+    if [[ $pack == "2" || $metadata == "2" ]]; then	
+      #Export a box from the parent VM
+      vagrant package
+    fi
+  elif [[ $parent_choice == "2" ]]; then
+    cd ${vm_dir}
+    vagrant package --base ${VBox_name}
   fi
+}
 
   sed -i 's,vmname = "NCP Debian VM",vmname = "NCP Debian VM Clone",' ${vm_dir}/Vagrantfile
-  sed -i 's,v.name = "NextCloudPi",v.name = "NextcloudPi_clone",' ${vm_dir}/Vagrantfile
-  #sed -i 's,#config.ssh.private_key_path,config.ssh.private_key_path,' ${vm_dir}/Vagrantfile
-  #sed -i 's,#config.ssh.insert_key,config.ssh.insert_key,' ${vm_dir}/Vagrantfile
-  sed -i '19s,#,,' ${vm_dir}/Vagrantfile
-  sed -i '51,84s/^#*/#/' ${vm_dir}/Vagrantfile
+  sed -i 's,v.name = "NextCloudPi",v.name = "NextCloudPi_clone",' ${vm_dir}/Vagrantfile
+  sed -i '21s,#,,' ${vm_dir}/Vagrantfile
+ # sed -i '53,85s/^#*/#/' ${vm_dir}/Vagrantfile
 }
 
 # Setup VM
