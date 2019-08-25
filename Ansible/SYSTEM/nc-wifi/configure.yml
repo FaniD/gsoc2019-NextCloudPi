@@ -4,7 +4,7 @@
 - hosts: local
   connection: local
   vars:
-    local_active:  "{{ lookup('env','ACTIVE') }}"
+    local_active:  "{{ active }}"
   tasks:
     - name: Stop and disable wicd if active
       systemd: 
@@ -38,6 +38,7 @@
       name: dhcpcd
       enabled: no
       status: stopped
+
     - systemd:
       name: wicd
       enabled: yes

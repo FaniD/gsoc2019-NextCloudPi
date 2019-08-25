@@ -4,9 +4,9 @@
 - hosts: local
   connection: local
   vars:
-    active: "{{ lookup('env','ACTIVE') }}"
-    user: "{{ lookup('env', 'USER') }}"
-    confirm: "{{ lookup('env', 'CONFIRM') }}"
+    active: "{{ active }}"
+    user: "{{ user }}"
+    confirm: "{{ confirm }}"
   tasks:
     - shell: echo "Off"
       register: opt

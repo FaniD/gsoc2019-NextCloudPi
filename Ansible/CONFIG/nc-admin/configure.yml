@@ -4,9 +4,9 @@
 - hosts: local
   connection: local
   vars:
-    local_pass: "{{ lookup('env','PASSWORD') }}"
-    local_user: "{{ lookup('env', 'USER') }}"
-    local_confirm: "{{ lookup('env', 'CONFIRM') }}"
+    local_pass: "{{ password }}"
+    local_user: "{{ user }}"
+    local_confirm: "{{ confirm }}"
   tasks:
     - fail:
         msg: "empty password"

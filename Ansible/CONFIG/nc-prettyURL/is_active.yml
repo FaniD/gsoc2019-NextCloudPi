@@ -13,4 +13,12 @@
     - fail:
         msg: "No rewritebase found"
       when: not rewritebase.stdout
+
+    - debug:
+        var: "return.stdout: true"
+      when: rewritebase.stdout != "1"
+
+   - debug:
+       var: "return.stdout: false"
+     when: rewritebase.stdout == "1"
    

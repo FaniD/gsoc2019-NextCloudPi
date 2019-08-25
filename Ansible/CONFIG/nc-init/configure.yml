@@ -5,9 +5,9 @@
   connection: local
   vars:
     dbadmin: ncadmin
-    datadir: "{{ lookup('env','DATADIR') }}"
-    adminuser: "{{ lookup('env','ADMINUSER') }}"
-    adminpass: "{{ lookup('env, 'ADMINPASS') }}"
+    datadir: "{{ datadir }}"
+    adminuser: "{{ adminuser }}"
+    adminpass: "{{ adminpass }}"
   tasks:
     - shell: source /usr/local/etc/library.sh && echo "${PHPVER}"
       register: phpver

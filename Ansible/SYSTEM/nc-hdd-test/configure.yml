@@ -4,14 +4,18 @@
 - hosts: local
   connection: local
   vars:
-    local_swap:  "{{ lookup('env','SWAPFILE') }}"
+    local_swap:  "{{ swapfile }}"
   tasks:
     - shell: lsblk -ln | grep "^sd[[:alpha:]].*disk" | awk '{ print $1 }'
       register: drives
-    - shell: echo "no drives detected. Abort"
+
+    - debug:
+        msg: "no drives detected. Abort"
       when: "{{ drives.stdout_lines|length == 0}}"
+
     - meta: end_play
       when: "{{ drives.stdout_lines|length == 0}}"
+
     - command: "{{ item.1 }}"
       with_nested:
         - "{{ drives.stdout_lines }}"

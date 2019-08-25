@@ -4,7 +4,7 @@
 - hosts: local
   connection: local
   vars:
-    local_active:  "{{ lookup('env','ACTIVE') }}"
+    local_active:  "{{ active }}"
   tasks:
     - name: Stop and disable automount if active
       systemd: 
@@ -12,23 +12,29 @@
       status: stopped
       enabled: no
       when: local_active != "yes"
+
     - name: Stop and disable automount-links if active
       systemd: 
       name: nc-automount-links
       status: stopped
       enabled: no
       when: local_active != "yes"
+
     - file:
         path: /etc/systemd/system/{mariadb,nfs-server,dphys-swapfile,fail2ban}.service.d
         state: absent
         force: yes
       when: local_active != "yes"
+
     - name: reload systemd
       sudo: yes
       command: systemctl daemon-reload
       when: local_active != "yes"
-    - shell: echo "automount disabled"
+
+    - debug:
+        msg: "automount disabled"
       when: local_active != "yes"
+
     - meta: end_play
       when: local_active != "yes"
 
@@ -36,6 +42,7 @@
       name: nc-automount
       status: started
       enabled: yes
+
     - systemd: 
       name: nc-automount-links
       status: started
@@ -57,39 +64,49 @@
     - file:
         path: /etc/systemd/system/mariadb.service.d/ncp-delay-automount.conf
         state: touch
+
     - blockinfile:
         path: /etc/systemd/system/mariadb.service.d/ncp-delay-automount.conf
         block: |
           [Service]
           ExecStartPre=/bin/sleep 20
           Restart=on-failure
+
     - file:
         path: /etc/systemd/system/nfs-server.service.d/ncp-delay-automount.conf
         state: touch
+
     - blockinfile:
         path: /etc/systemd/system/nfs-server.service.d/ncp-delay-automount.conf
         block: |
           [Service]
           ExecStartPre=
           ExecStartPre=/bin/bash -c "/bin/sleep 30; /usr/sbin/exportfs -r"
+
     - file:
         path: /etc/systemd/system/dphys-swapfile.service.d/ncp-delay-automount.conf
         state: touch
+
     - blockinfile:
         path: /etc/systemd/system/dphys-swapfile.service.d/ncp-delay-automount.conf
         block: |
           [Service]
           ExecStartPre=/bin/sleep 30
+
     - file:
         path: /etc/systemd/system/fail2ban.service.d
         state: touch
+
     - blockinfile:
         path: /etc/systemd/system/fail2ban.service.d
         block: |
           [Service]
           ExecStartPre=/bin/sleep 10
+
     - name: reload systemd
       sudo: yes
       command: systemctl daemon-reload
-    - shell: echo "automount enabled"
+
+    - debug:
+        msg: "automount enabled"
  

@@ -1,0 +1,8 @@
+ 
+---
+- hosts: local
+  connection: local
+  tasks:
+    - name: install
+      debug:
+        msg: "return.stdout: true"

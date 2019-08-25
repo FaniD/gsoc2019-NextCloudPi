@@ -4,7 +4,7 @@
 - hosts: local
   connection: local
   vars:
-    dbdir:  "{{ lookup('env','DBDIR') }}"
+    dbdir:  "{{ dbdir }}"
   tasks:
 
     - shell: grep datadir /etc/mysql/mariadb.conf.d/90-ncp.cnf | awk -F "= " '{ print $2 }'

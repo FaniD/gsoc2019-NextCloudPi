@@ -15,7 +15,8 @@
       register: hdd_log
 
     - name: one of the dirs exists
-      shell: echo 'log2ram detected, not installing'
+      debug:
+        msg: "log2ram detected, not installing"
       when: (log_hdd.stat.exists and log_hdd.stat.isdir) or (hdd_log.stat.exists and hdd_log.stat.isdir)
 
     - meta: end_play

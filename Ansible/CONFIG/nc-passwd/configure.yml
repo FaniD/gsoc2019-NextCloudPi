@@ -4,8 +4,8 @@
 - hosts: local
   connection: local
   vars:
-    pass: "{{ lookup('env','PASSWORD') }}"
-    confirm: "{{ lookup('env', 'CONFIRM') }}"
+    pass: "{{ password}}"
+    confirm: "{{ confirm }}"
   tasks:
       # updat password
     - shell: echo -e "{{ password }}\n{{ confirm }}" | passwd ncp &>/dev/null

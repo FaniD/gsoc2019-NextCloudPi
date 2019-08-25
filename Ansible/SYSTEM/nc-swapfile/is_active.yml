@@ -7,11 +7,11 @@
     - shell: swapon -s | sed -n 2p | awk '{ print $1 }'
       register: dir
 
-    - register: activeness1
-      when: dir != ""
+    - name: returning
+      debug:
+        msg: "return.stdout: true"
+      when: dir != "" and dir != "/var/swap"
 
-    - register: activeness2
-      when: dir != "/var/swap"
-
-    - register: active
-      when: activeness1 and activeness2
+    - debug:
+        msg: "return.stdout: false"
+      when: dir == "" or dir == "/var/swap"

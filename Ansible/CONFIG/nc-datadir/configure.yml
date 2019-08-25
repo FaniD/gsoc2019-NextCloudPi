@@ -4,7 +4,7 @@
 - hosts: local
   connection: local
   vars:
-    datadir:  "{{ lookup('env','DATADIR') }}"
+    datadir:  "{{ datadir }}"
   tasks:
     - shell: source /usr/local/etc/library.sh && echo "${PHPVER}"
       register: phpver

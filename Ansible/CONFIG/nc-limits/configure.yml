@@ -4,10 +4,10 @@
 - hosts: local
   connection: local
   vars:
-    max_file_size:  "{{ lookup('env','MAXFILESIZE') }}"
-    memory_limit: "{{ lookup('env','MEMORYLIMIT') }}"
-    phpthreads: "{{ lookup('env, 'PHPTHREADS') }}"
-    redis_mem: "{{ lookup('env, 'REDISMEM') }}"
+    max_file_size:  "{{ maxfilesize }}"
+    memory_limit: "{{ memorylimit }}"
+    phpthreads: "{{ phpthreads }}"
+    redis_mem: "{{ redismem }}"
   tasks:
     - shell: source /usr/local/etc/library.sh && echo "${PHPVER}"
       register: phpver

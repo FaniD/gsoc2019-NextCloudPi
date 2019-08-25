@@ -4,7 +4,7 @@
 - hosts: local
   connection: local
   vars:
-    local_swap:  "{{ lookup('env','SWAPFILE') }}"
+    local_swap:  "{{ swapfile }}"
   tasks:
     - shell: swapon | tail -1 | awk '{ print $1 }'
       register: orig
@@ -12,7 +12,8 @@
     - shell: dirname "$SWAPFILE" 
       register: dstdir
 
-    - shell: echo "nothing to do"
+    - debug:
+        msg: "nothing to do"
       when: orig.stdout == local_swap
 
     - meta: end_play
