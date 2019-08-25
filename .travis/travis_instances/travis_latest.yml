@@ -11,7 +11,7 @@ branches:
   only:
         - gsoc2019-travis
 # Only build tags
-#if: tag IS present
+if: tag IS present
 cache:
   directories:
         - docker_cached
@@ -25,7 +25,6 @@ jobs:
           install:
           - ./.travis/configure_docker.sh #upgrading docker
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
 
           script:
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done & 
@@ -46,15 +45,13 @@ jobs:
               CACHE_NAME=ARMHF
           install:
           - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
+          - ./.travis/configure_docker.sh #upgrading docker
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
 
           script:
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
           - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-armhf:latest --pull --build-arg arch=armhf --build-arg arch_qemu=arm > output
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
-            #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
           - tail -f output &
           - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-armhf:latest --build-arg arch=armhf > output
           - sed -i '/open_files_limit=65536/d' lamp.sh
@@ -67,15 +64,13 @@ jobs:
               CACHE_NAME=ARM64
           install:
           - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
+          - ./.travis/configure_docker.sh #upgrading docker
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
 
           script:
           - while sleep 9m; do echo "=====[ $SECONDS seconds, build-docker still building... ]====="; done &
           - DOCKER_BUILDKIT=1 docker build . -f docker/debian-ncp/Dockerfile -t ownyourbits/debian-ncp-arm64v8:latest --build-arg arch=arm64v8 --build-arg arch_qemu=aarch64 > output
           - sed -i "/innodb_file_format=barracuda/a open_files_limit=65536" lamp.sh
-            #- sed -i "/innodb_file_format=barracuda/a innodb_force_recovery=1" lamp.sh
           - tail -f output &
           - DOCKER_BUILDKIT=1 docker build . -f docker/lamp/Dockerfile -t ownyourbits/lamp-arm64v8:latest --build-arg arch=arm64v8 > output
           - sed -i '/open_files_limit=65536/d' lamp.sh
@@ -84,16 +79,15 @@ jobs:
 
         - stage: building_part2
 
-          #Arms images usually take some time to get built alltogether so we split their building in 2 stages
+          # Arms images usually take some time to get built alltogether so we split their building in 2 stages
 
           ### armhf Docker images
           env:
               CACHE_NAME=ARMHF
           install:
           - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
+          - ./.travis/configure_docker.sh #upgrading docker
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
 
           before_script:
           - docker load --input docker_cached/lamp-armhf.tar
@@ -110,9 +104,8 @@ jobs:
               CACHE_NAME=ARM64
           install:
           - sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          - ./.travis/configure_docker.sh #upgrading docker and installing packages for arm architecture
+          - ./.travis/configure_docker.sh #upgrading docker
           - export DOCKER_CLI_EXPERIMENTAL=enabled #enable experimental features
-          - docker version #Check Docker 18.09 is installed
 
           before_script:
           - docker load --input docker_cached/lamp-arm64v8.tar
