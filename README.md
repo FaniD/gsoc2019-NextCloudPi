@@ -88,7 +88,7 @@ Docker Swarm is used as the container orchestrator of the system and GlusterFS d
 
 **Usage:** ./create_swarm.sh
 
-![ncp_swarm](https://www.dropbox.com/s/cv85lljk72h55o1/automation_script400.jpg?raw=1)
+![ncp_swarm](https://www.dropbox.com/s/q0placsqas5z4ey/Untitled%20Diagram%281%29.jpg?raw=1)
 
 [This](https://ownyourbits.com/2019/08/21/make-your-nextcloudpi-highly-available/) article provides a step-by-step tutorial with screenshots.
 
