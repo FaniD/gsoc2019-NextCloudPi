@@ -59,7 +59,7 @@ Some extra tools are implemented to provide automatic restart of failed jobs and
 
 The following flowchart describes the travis.yml file and how these tools are used:
 
-![travis](https://www.dropbox.com/s/ghxqjw5mym404i9/TravisNCP.jpg?raw=1)
+![travis](https://www.dropbox.com/s/y715hwhblxw8mto/TravisNCP_resized.jpg?raw=1)
 
 ### 2. NextCloudPi VM on VirtualBox easy setup and clone using Vagrant**
 Under the directory Vagrant, there is an automation script that creates a new NCP VM just by asking the user to provide a minimum input and can also create a clone of an existing NCP VM.
@@ -88,7 +88,7 @@ Docker Swarm is used as the container orchestrator of the system and GlusterFS d
 
 **Usage:** ./create_swarm.sh
 
-![ncp_swarm](https://www.dropbox.com/s/q0placsqas5z4ey/Untitled%20Diagram%281%29.jpg?raw=1)
+![ncp_swarm](https://www.dropbox.com/s/kwq59c83ezg1idb/swarm_resized.jpg?raw=1)
 
 [This](https://ownyourbits.com/2019/08/21/make-your-nextcloudpi-highly-available/) article provides a step-by-step tutorial with screenshots.
 
