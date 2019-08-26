@@ -163,11 +163,11 @@ EOF
   if ! pgrep -c mysqld &>/dev/null; then
     mysqld & 
   fi
-
+  
   # wait for mariadb
   while :; do
     [[ -S /run/mysqld/mysqld.sock ]] && break
-    sleep 0.5
+    sleep 0.5    
   done
 
   cd /tmp

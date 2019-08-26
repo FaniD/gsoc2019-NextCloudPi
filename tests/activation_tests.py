@@ -114,7 +114,7 @@ def test_activation(IP):
 
     test.new("activation ends")
     try:
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         wait.until(EC.text_to_be_present_in_element((By.ID,'error-box'), "ACTIVATION SUCCESSFUL"))
         test.check(True)
     except TimeoutException: 

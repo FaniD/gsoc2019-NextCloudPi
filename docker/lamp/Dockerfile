@@ -18,10 +18,10 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 source /usr/local/etc/library.sh; \
 set +x; \
 install_app /usr/local/etc/lamp.sh; \
-
-# stop mysqld
+#echo "===Installed mysql, shut it down==="; \
+#mysqld stop; \
 mysqladmin -u root shutdown; \
-
+#echo "===Mariadb is stopped==="; \
 # mariaDB fixups (move database to /data-ro, which will be in a persistent volume)
 mkdir -p /data-ro /data; \
 mv /var/lib/mysql /data-ro/database; \
