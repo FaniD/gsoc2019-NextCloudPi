@@ -61,7 +61,7 @@ The following flowchart describes the travis.yml file and how these tools are us
 
 ![travis](https://www.dropbox.com/s/ufwa1djuw7b2qok/TravisNCP_resized2.jpg?raw=1)
 
-### 2. NextCloudPi VM on VirtualBox easy setup and clone using Vagrant**
+### 2. NextCloudPi VM on VirtualBox easy setup and clone using Vagrant
 Under the directory Vagrant, there is an automation script that creates a new NCP VM just by asking the user to provide a minimum input and can also create a clone of an existing NCP VM.
 The Vagrantfile produced by the automation script differs from the one provided on the official nextcloudpi repository as it contains VirtualBox specific commands.
 People who are having a hard time to setup a VM on their own will benefit from this script as it does not ask for any technical details.
@@ -95,7 +95,7 @@ Docker Swarm is used as the container orchestrator of the system and GlusterFS d
 ### 3. Ansible role
 Under the directory Ansible, there are Ansible playbooks of the bash scripts of NCP server. Ansible playbooks will be used to replace the execution of NCP server's bash scripts in order to provide an alternative option of configuring NCP.
 
-**Usage (of each playbook):** ansible-playbook playbooks_name.yml --extra-vars "version=argument1 other_variable=argument2"
+**Usage (of each playbook):** ansible-playbook playbooks_name.yml --extra-vars "var1=value1 var2=value2"
 
 ## Final Report Gist
 You can find the final report [here](https://gist.github.com/FaniD/e3217375a38c161d7f426abfb3a84300).
