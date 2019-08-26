@@ -1,0 +1,44 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_active:  "{{ active }}"
+  tasks:
+    - name: Stop and disable log2ram if active
+      systemd: 
+      name: log2ram
+      status: stopped
+      enabled: no
+      when: local_active != "yes"
+      
+    - debug:
+        msg: "Logs in SD. Reboot to take effect"
+      when: local_active != "yes"
+
+    - meta: end_play
+      when: local_active != "yes"
+    
+    - name: existence of /lib/systemd/system/armbian-ramlog.service
+      stat:
+        path: /lib/systemd/system/armbian-ramlog.service
+      register: arm-ramlog-service
+
+    - systemd:
+      name: armbian-ramlog
+      enabled: yes
+      status: started
+      when: arm-ramlog-service.stat.exists
+
+    - shell: echo "Logs in RAM. Reboot to take effect"
+      when: arm-ramlog-service.stat.exists
+
+    - meta: end_play
+      when: arm-ramlog-service.stat.exists
+
+    - systemd:
+      name: log2ram
+      enabled: yes
+      status: started
+ 

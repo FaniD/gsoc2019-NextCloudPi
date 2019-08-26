@@ -1,0 +1,94 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    dbdir:  "{{ dbdir }}"
+  tasks:
+
+    - shell: grep datadir /etc/mysql/mariadb.conf.d/90-ncp.cnf | awk -F "= " '{ print $2 }'
+      register: srcdir
+
+    - stat:
+        path: "{{ srcdir.stdout }}"
+      register: folder_srcdir
+
+    - fail:
+        msg: "database directory {{ srcdir.stdout }} not found"
+      when: not (folder_srcdir.stat.exists and folder_srcdir.stat.isdir)
+
+    - stat:
+        path: "{{ dbdir }}"
+      register: folder_dbdir
+
+    - shell: find "{{ dbdir }}" -maxdepth 0 -empty | wc -l
+      register: find_dbdir
+      when: folder_dbdir.stat.exists and folder_dbdir.stat.isdir
+
+    - fail:
+        msg: "{{ dbdir }} is not empty"
+      when: folder_dbdir.stat.exists and folder_dbdir.stat.isdir and find_dbdir.stdout == "0"
+
+    - shell: ls | wc -l 
+      register: isempty
+      when: folder_dbdir.stat.exists and folder_dbdir.stat.isdir
+
+    - file:
+        path: "{{ dbdir }}"
+        state: absent
+      when: folder_dbdir.stat.exists and folder_dbdir.stat.isdir and isempty.stdout == "0"
+
+    - shell: dirname {{ dbdir }}
+      register: basedir
+
+    - stat:
+        path: "{{ basedir.stdout }}"
+      register: folder_basedir
+
+    - file:
+        path: "{{ basedir.stdout }}"
+        state: directory
+      when: not folder_basedir.stat.exists
+
+    - shell: grep -q -e ext -e btrfs <( stat -fc%T "{{ basedir.stdout }}" )
+      register: btrfs_basedir
+
+    - fail:
+        msg: "Only ext/btrfs filesystems can hold the data directory"
+      when: brrfs_basedir.stdout == ""
+
+    - shell: sudo -u mysql test -x "{{ basedir.stdout }}"
+      register: mysqltest
+
+    - fail:
+        msg: "ERROR: the user mysql does not have access permissions over {{ basedir.stdout }}"
+      when: mysqltest.stdout == ""
+
+    - shell: stat -fc%d /
+      register: comp1
+
+    - shell: stat -fc%d "{{ basedir.stdout }}"
+      register: comp2
+
+    - debug:
+        msg: "INFO: moving database to the SD card\nIf you want to use an external mount, make sure it is properly set up"
+      when: comp1.stdout == comp2.stdout
+
+    - command: chdir=/var/www/nextcloud sudo -u www-data php occ maintenance:mode --on
+
+    - debug:
+        msg: "moving database to {{ dbdir }}..."
+
+    - systemd: 
+        name: mysql
+        status: stopped
+
+    - shell: mv "{{ srcdir.stdout }}" "{{ dbdir }}" && sed -i "s|^datadir.*|datadir = {{ dbdir }}|" /etc/mysql/mariadb.conf.d/90-ncp.cnf
+
+    - systemd: 
+        name: mysql
+        status: started
+
+    - command: chdir=/var/www/nextcloud sudo -u www-data php occ maintenance:mode --off
+

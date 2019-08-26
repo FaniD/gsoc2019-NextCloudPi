@@ -1,0 +1,12 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+    - apt:
+        update_cache: yes
+    - apt:
+        force: yes
+        install_recommends: no
+        name: bsdmainutils

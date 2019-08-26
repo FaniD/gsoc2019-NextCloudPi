@@ -1,0 +1,24 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    ncdir: "/var/www/nextcloud"
+    occ: "/var/www/nextcloud/occ"
+  tasks:
+    - shell: grep RewriteBase /var/www/nextcloud/.htaccess 
+      register: rewritebase
+
+    - fail:
+        msg: "No rewritebase found"
+      when: not rewritebase.stdout
+
+    - debug:
+        var: "return.stdout: true"
+      when: rewritebase.stdout != "1"
+
+   - debug:
+       var: "return.stdout: false"
+     when: rewritebase.stdout == "1"
+   

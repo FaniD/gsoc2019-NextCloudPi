@@ -118,6 +118,7 @@ $CFG_STEP
 
 function prepare_dirs()
 {
+  echo "===Inside source preparing dirs...==="
   [[ "$CLEAN" == "0" ]] || rm -rf cache
   rm -rf tmp
   mkdir -p tmp output cache

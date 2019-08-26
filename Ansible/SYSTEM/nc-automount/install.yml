@@ -1,0 +1,102 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+    - apt:
+        update_cache: yes
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: udiskie
+
+    - apt:
+        force: yes
+        install_recommends: no
+        name: inotify-tools
+
+    - file:
+        path: /etc/udev/rules.d/99-udisks2.rules
+        state: touch
+
+    - blockinfile:
+        path: /etc/udev/rules.d/99-udisks2.rules
+        block: |
+          ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
+    - file:
+        path: /usr/lib/systemd/system/nc-automount.service
+        state: touch
+
+    - blockinfile:
+        path: /usr/lib/systemd/system/nc-automount.service
+        block: |
+          [Unit]
+          Description=Automount USB drives
+          Before=mysqld.service dphys-swapfile.service fail2ban.service smbd.service nfs-server.service
+          [Service]
+          Restart=always
+          ExecStartPre=/bin/bash -c "rmdir /media/* || true"
+          ExecStart=/usr/bin/udiskie -NTF
+          [Install]
+          WantedBy=multi-user.target
+
+    - file:
+        path: /usr/lib/systemd/system/nc-automount.service
+        state: touch
+
+    - blockinfile:
+        path: /usr/lib/systemd/system/nc-automount.service
+        block: |
+          [Unit]
+          Description=Monitor /media for mountpoints and create USBdrive* symlinks
+          Before=nc-automount.service
+          [Service]
+          Restart=always
+          ExecStart=/usr/local/etc/nc-automount-links-mon
+          [Install]
+          WantedBy=multi-user.target
+
+    - file:
+        path: /usr/local/etc/nc-automount-links 
+        state: touch
+
+    - blockinfile:
+        path: /usr/local/etc/nc-automount-links 
+        block: |
+          #!/bin/bash
+          ls -d /media/* &>/dev/null && {
+            # remove old links
+            for l in $( ls /media/ ); do
+              test -L /media/"$l" && rm /media/"$l"
+            done
+            # create links
+            i=0
+            for d in $( ls -d /media/* 2>/dev/null ); do
+              if [ $i -eq 0 ]; then
+                test -e /media/USBdrive   || test -d "$d" && ln -sT "$d" /media/USBdrive
+              else
+                test -e /media/USBdrive$i || test -d "$d" && ln -sT "$d" /media/USBdrive$i
+              fi
+              i=$(( i + 1 ))
+            done
+          }
+    - file: dest=/usr/local/etc/nc-automount-links mode=+x
+
+    - file:
+        path: /usr/local/etc/nc-automount-links-mon 
+        state: touch
+
+    - blockinfile:
+        path: /usr/local/etc/nc-automount-links-mon 
+        block: |
+          #!/bin/bash
+          inotifywait --monitor --event create --event delete --format '%f %e' /media/ | \
+            grep --line-buffered ISDIR | while read f; do
+              echo $f
+              sleep 0.5
+              /usr/local/etc/nc-automount-links
+          done
+
+    - file: dest=/usr/local/etc/nc-automount-links-mon mode=+x

@@ -1,0 +1,275 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    beta: "{{ beta }}"
+    nextcloud_ver: "{{ ver }}"
+    maxfilesize: "{{ maxfilesize }}"
+    memorylimit: "{{ memorylimit }}"
+    maxtransfertime: "{{ maxtransfertime }}"
+  tasks:
+      ## IF BETA SELECTED ADD "pre" to DOWNLOAD PATH
+    - shell: echo "pre"
+      register: prefix
+      when: beta == "yes"
+
+      ## DOWNLOAD AND (OVER)WRITE NEXTCLOUD
+    - shell: echo "https://download.nextcloud.com/server/{{ prefix }}releases/nextcloud-{{ nextcloud_ver }}.tar.bz2"
+      register: url
+
+    - debug:
+        msg: "Downloading Nextcloud {{ nextcloud_ver }}..."
+
+    - get_url:
+        url: "{{ url.stdout }}" 
+        dest: /var/www/nextcloud.tar.bz2
+      register: wget_status
+
+    - fail:
+        msg: "couldn't download {{ url.stdout }}"
+      when: wget_status is not changed
+
+    - file:
+        path: "/var/www/nextcloud"
+        state: absent
+        force: yes (for -rf)
+
+    - debug:
+        msg: "Installing Nextcloud {{ nextcloud_ver }}"
+
+    - unarchive:
+        src: /var/www/nextcloud.tar.bz2
+        dest: /var/www
+
+    - file:
+        path: "/var/www/nextcloud.tar.bz2"
+        state: absent
+
+      ## CONFIGURE FILE PERMISSIONS
+    - shell: echo "/var/www/nextcloud"
+      register: ocpath
+
+    - shell: echo "www-data"
+      register: htuser
+
+    - shell: echo "www-data"
+      register: htgroup
+
+    - shell: echo "root"
+      register: rootuser
+
+    - debug:
+        msg: "Creating possible missing Directories"
+
+    - file:
+        path: {{ ocpath.stdout }}/data
+        state: directory
+
+    - file:
+        path: {{ ocpath.stdout }}/updater
+        state: directory
+
+    - debug:
+        msg: "chmod Files and Directories"
+
+    - shell: find "{{ ocpath.stdout }}" -type f -print0 | xargs -0 chmod 0640
+
+    - shell: find "{{ ocpath.stdout }}"/ -type d -print0 | xargs -0 chmod 0750
+
+    - debug:
+        msg: "chown Directories"
+
+    - file:
+        path: {{ ocpath.stdout }}
+        owner: {{ htuser.stdout }}
+        group: {{ htgroup.stdout }}
+        recurse: true
+
+    - file:
+        path: {{ ocpath.stdout }}/apps
+        owner: {{ htuser.stdout }}
+        group: {{ htgroup.stdout }}
+        recurse: true
+
+    - file:
+        path: {{ ocpath.stdout }}/config
+        owner: {{ htuser.stdout }}
+        group: {{ htgroup.stdout }}
+        recurse: true
+
+    - file:
+        path: {{ ocpath.stdout }}/data
+        owner: {{ htuser.stdout }}/themes
+        group: {{ htgroup.stdout }}
+        recurse: true
+
+    - file:
+        path: {{ ocpath.stdout }}/updater
+        owner: {{ htuser.stdout }}
+        group: {{ htgroup.stdout }}
+        recurse: true
+
+    - file:
+        path: {{ ocpath.stdout }}/occ
+        mode: +x
+
+    - debug:
+        msg: "chmod/chown .htaccess"
+
+    - file:
+        path: {{ ocpath.stdout }}/.htaccess
+        owner: {{ htuser.stdout }}/.htaccess
+        group: {{ htgroup.stdout }}/.htaccess
+        mode: 0644
+
+    - file:
+        path: {{ ocpath.stdout }}/data/.htaccess
+        owner: {{ htuser.stdout }}/data/.htaccess
+        group: {{ htgroup.stdout }}/data/.htaccess
+        mode: 0644
+ 
+      # create and configure opcache dir
+    - shell: echo "/var/www/nextcloud/data/.opcache"
+      register: opcachedir
+
+    - shell: sed -i "s|^opcache.file_cache=.*|opcache.file_cache={{ opcachedir.stdout }}|" /etc/php/{{ phpver }}/mods-available/opcache.ini
+
+    - file:
+        path: {{ opcachedir.stdout }}
+        state: directory
+
+    - file:
+        path: {{ opcachedir.stdout }}
+        owner: www-data
+        group: www-data
+        recurse: true
+
+      ## RE-CREATE DATABASE TABLE
+      # launch mariadb if not already running (for docker build)
+    - shell: pgrep -c mysqld
+      register: pgrep_out
+
+    - debug:
+        msg: "Starting mariaDB"
+      when: not pgrep_out.stdout
+
+    - shell: mysqld &
+      when: not pgrep_out.stdout
+
+      # wait for mariadb
+    - shell: pgrep -x mysqld
+      register: pgrep_out
+
+    - debug:
+        msg: "mariaDB process not found"
+      when: not pgrep_out.stdout
+
+    - stat:
+        path: /var/run/mysqld/mysql.sock
+      register: socket
+      until: socket.stat.exists and socket.stat.issock
+      retries: 100
+      delay: 0.5
+      ignore_errors: yes
+
+    - debug:
+        msg: "Setting up database..."
+
+      # workaround to emulate DROP USER IF EXISTS ..;)
+    - shell: grep password /root/.my.cnf | sed 's|password=||'
+      register: dbpasswd
+
+    - shell: mysql <<EOF
+      DROP DATABASE IF EXISTS nextcloud;
+      CREATE DATABASE nextcloud
+         CHARACTER SET utf8mb4
+         COLLATE utf8mb4_general_ci;
+      GRANT USAGE ON *.* TO '$DBADMIN'@'localhost' IDENTIFIED BY '$DBPASSWD';
+      DROP USER '$DBADMIN'@'localhost';
+      CREATE USER '$DBADMIN'@'localhost' IDENTIFIED BY '$DBPASSWD';
+      GRANT ALL PRIVILEGES ON nextcloud.* TO $DBADMIN@localhost;
+      EXIT
+      EOF
+
+     ## SET APACHE VHOST
+   - debug:
+       msg: "Setting up Apache..."
+
+   - blockinfile:
+       path: /etc/apache2/sites-available/nextcloud.conf
+       block: |         
+          <IfModule mod_ssl.c>
+            <VirtualHost _default_:443>
+              DocumentRoot /var/www/nextcloud
+              CustomLog /var/log/apache2/nc-access.log combined
+              ErrorLog  /var/log/apache2/nc-error.log
+              SSLEngine on
+              SSLCertificateFile      /etc/ssl/certs/ssl-cert-snakeoil.pem
+              SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+            </VirtualHost>
+            <Directory /var/www/nextcloud/>
+              Options +FollowSymlinks
+              AllowOverride All
+              <IfModule mod_dav.c>
+                Dav off
+              </IfModule>
+              LimitRequestBody 0
+              SSLRenegBufferSize 10486000
+            </Directory>
+          </IfModule>
+
+   - command: a2ensite nextcloud
+
+   - blockinfile:
+       path: /etc/apache2/sites-available/000-default.conf
+       block: |
+          <VirtualHost _default_:80>
+            DocumentRoot /var/www/nextcloud
+            <IfModule mod_rewrite.c>
+              RewriteEngine On
+              RewriteCond %{HTTPS} !=on
+              RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
+            </IfModule>
+          </VirtualHost>
+
+     # some added security 
+   - shell: sed -i 's|^ServerSignature .*|ServerSignature Off|' /etc/apache2/conf-enabled/security.conf
+
+   - shell: sed -i 's|^ServerTokens .*|ServerTokens Prod|'      /etc/apache2/conf-enabled/security.conf
+
+   - debug:
+       msg: "Setting up system..."
+
+     ## SET LIMITS
+   - blockinfile:
+       path: /etc/php/{{ phpver }}/fpm/conf.d/90-ncp.ini
+       block: |
+        ; disable .user.ini files for performance and workaround NC update bugs
+        user_ini.filename =
+        ; from Nextcloud .user.ini
+        upload_max_filesize={{ maxfilesize }}
+        post_max_size={{ maxfilesize }}
+        memory_limit={{ memorylimit }}
+        mbstring.func_overload=0
+        always_populate_raw_post_data=-1
+        default_charset='UTF-8'
+        output_buffering=0
+        ; slow transfers will be killed after this time
+        max_execution_time={{ maxtransfertime }}
+        max_input_time={{ maxtransfertime }}
+
+     ## SET CRON
+   - lineinfile:
+       path: /tmp/crontab_http
+       line: */15  *  *  *  * php -f /var/www/nextcloud/cron.php
+
+   - command: crontab -u www-data /tmp/crontab_http
+
+   - file:
+       path: /tmp/crontab_http
+       state: absent
+
+   - debug:
+       msg: "Don't forget to run nc-init"

@@ -1,0 +1,6 @@
+[credentials]
+ncp_user = ncp
+ncp_pass = h+awx5WTrzRsTkmlNUy82tC+N8T7YXnYmMS7ma3gX9c
+nc_user = ncp
+nc_pass = C+MjstWY83Kpnjz5wbxycL5P+afjTMFR/p3GW33CFfo
+

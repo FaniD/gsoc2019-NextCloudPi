@@ -1,0 +1,17 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+    - shell: swapon -s | sed -n 2p | awk '{ print $1 }'
+      register: dir
+
+    - name: returning
+      debug:
+        msg: "return.stdout: true"
+      when: dir != "" and dir != "/var/swap"
+
+    - debug:
+        msg: "return.stdout: false"
+      when: dir == "" or dir == "/var/swap"

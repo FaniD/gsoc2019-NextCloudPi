@@ -1,0 +1,61 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+#
+# Vagrantfile for the NCP Debian VM
+#
+# Instructions: vagrant up; vagrant ssh
+#
+# Notes: User/Pass is ubnt/ubnt.
+# $HOME is accessible as /external. CWD is accessible as /cwd
+#
+
+Vagrant.configure("2") do |config|
+
+  vmname = "workerX"
+
+  #Box settings
+  config.vm.box = "ubuntu/xenial64"
+  config.vm.box_check_update = false
+
+  #VM settings
+  config.vm.hostname = "workerX"
+
+  #Networking
+
+  #Public IP
+  config.vm.network "public_network", bridge: "<hostinterface>", ip: "<IP>"
+
+  #Provider settings
+  config.vm.provider "virtualbox" do |v|
+    #Resources
+    v.memory = 1000
+    v.cpus = 1
+
+    #VM name
+    v.name = "workerX"
+
+  end
+
+
+  config.vm.synced_folder '.', '/vagrant', disabled: false
+
+  $script = <<-SHELL
+    sudo su
+
+    # Update docker
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    sudo usermod -aG docker vagrant
+
+    sudo apt-get install -y vim
+    systemctl enable sshd
+  
+    sudo mv /vagrant/gluster_setup.sh .
+    sudo mv /vagrant/gluster_volume.sh .
+  SHELL
+
+  # Provision the VM
+  config.vm.provision "shell", inline: $script
+
+end

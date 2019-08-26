@@ -1,0 +1,24 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    active: "{{ active }}"
+    user: "{{ user }}"
+    confirm: "{{ confirm }}"
+  tasks:
+    - shell: echo "Off"
+      register: opt
+      when: active == "no"
+
+    - shell: echo "On"
+      register: opt
+      when: active != "no"
+
+    - shell: sed -i "s|RewriteEngine .*|RewriteEngine {{ opt.stdout }}|" /etc/apache2/sites-available/000-default.conf
+
+    - debug:
+        msg: "Forcing HTTPS {{ opt.stdout }}"
+        
+    - shell: bash -c "sleep 2 && service apache2 reload" &>/dev/null &

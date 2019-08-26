@@ -1,0 +1,18 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+    - name: is active log2ram
+      systemd:
+              name: log2ram
+              state: started
+      register: logtoram
+
+    - name: is active armbian
+      systemd:
+              name: armbian-ramlog
+              state: started
+              when: not logtoram
+

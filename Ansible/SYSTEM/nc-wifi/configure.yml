@@ -1,0 +1,53 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_active:  "{{ active }}"
+  tasks:
+    - name: Stop and disable wicd if active
+      systemd: 
+      name: wicd
+      status: stopped
+      enabled: no
+      when: local_active != "yes"
+
+    - name: Enable dhcp
+      systemd: 
+      name: dhcpcd
+      status: started
+      enabled: yes
+      when: local_active != "yes"
+
+    - shell: ip link set up dev wlan0 # Fix with net_interface
+      when: local_active != "yes"
+
+    - name: Start nextcloud domain
+      systemd: 
+      name: nextcloud-domain
+      status: started
+      when: local_active != "yes"
+
+    - meta: end_play
+      when: local_active != "yes"
+
+    - shell: ip link set up dev wlan0 # Fix with net_interface
+
+    - systemd:
+      name: dhcpcd
+      enabled: no
+      status: stopped
+
+    - systemd:
+      name: wicd
+      enabled: yes
+      status: started
+
+    - shell: wicd-curses # check if this works
+
+    - name: Start nextcloud domain
+      systemd: 
+      name: nextcloud-domain
+      status: started
+

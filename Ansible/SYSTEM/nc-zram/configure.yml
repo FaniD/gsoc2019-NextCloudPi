@@ -1,0 +1,30 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_active:  "{{ active }}"
+  tasks:
+    - name: Stop and disable zram if active
+      systemd: 
+      name: zram
+      status: stopped
+      enabled: no
+      when: local_active != "yes"
+
+    - debug:
+        msg: "Logs in SD. Reboot to take effect"
+      when: local_active != "yes"
+
+    - meta: end_play
+      when: local_active != "yes"
+
+    - systemd:
+      name: zram
+      enabled: yes
+      status: started
+
+    - debug:
+        msg: "ZRAM enabled"
+ 

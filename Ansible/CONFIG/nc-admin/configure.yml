@@ -1,0 +1,24 @@
+#
+
+---
+- hosts: local
+  connection: local
+  vars:
+    local_pass: "{{ password }}"
+    local_user: "{{ user }}"
+    local_confirm: "{{ confirm }}"
+  tasks:
+    - fail:
+        msg: "empty password"
+      when: local_pass == ""
+
+    - fail:
+        msg: "empty user"
+      when: local_user == ""
+
+    - fail:
+        msg: "passwords do not match"
+      when: local_pass == local_confirm
+
+    - shell: OC_PASS={{local_pass}} sudo -E -u www-data php /var/www/nextcloud/occ user:resetpassword --password-from-env {{local_user}}
+

@@ -1,0 +1,20 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+    - debug:
+        msg: "Gathering information..."
+
+    - shell: bash /usr/local/bin/ncp-diag
+      register: local_out
+
+    - shell: bash /usr/local/bin/ncp-diag | column -t -s'|'
+
+    - shell: bash /usr/local/bin/ncp-suggestions $(bash /usr/local/bin/ncp-diag) # will this work?
+
+    - name: returning
+      debug:
+        msg: "return.stdout: 0"
+
