@@ -59,9 +59,9 @@ Some extra tools are implemented to provide automatic restart of failed jobs and
 
 The following flowchart describes the travis.yml file and how these tools are used:
 
-![travis](https://www.dropbox.com/s/ghxqjw5mym404i9/TravisNCP.jpg?raw=1)
+![travis](https://www.dropbox.com/s/ufwa1djuw7b2qok/TravisNCP_resized2.jpg?raw=1)
 
-### 2. NextCloudPi VM on VirtualBox easy setup and clone using Vagrant**
+### 2. NextCloudPi VM on VirtualBox easy setup and clone using Vagrant
 Under the directory Vagrant, there is an automation script that creates a new NCP VM just by asking the user to provide a minimum input and can also create a clone of an existing NCP VM.
 The Vagrantfile produced by the automation script differs from the one provided on the official nextcloudpi repository as it contains VirtualBox specific commands.
 People who are having a hard time to setup a VM on their own will benefit from this script as it does not ask for any technical details.
@@ -88,14 +88,14 @@ Docker Swarm is used as the container orchestrator of the system and GlusterFS d
 
 **Usage:** ./create_swarm.sh
 
-![ncp_swarm](https://www.dropbox.com/s/cv85lljk72h55o1/automation_script400.jpg?raw=1)
+![ncp_swarm](https://www.dropbox.com/s/kwq59c83ezg1idb/swarm_resized.jpg?raw=1)
 
 [This](https://ownyourbits.com/2019/08/21/make-your-nextcloudpi-highly-available/) article provides a step-by-step tutorial with screenshots.
 
 ### 3. Ansible role
 Under the directory Ansible, there are Ansible playbooks of the bash scripts of NCP server. Ansible playbooks will be used to replace the execution of NCP server's bash scripts in order to provide an alternative option of configuring NCP.
 
-**Usage (of each playbook):** ansible-playbook playbooks_name.yml --extra-vars "version=argument1 other_variable=argument2"
+**Usage (of each playbook):** ansible-playbook playbooks_name.yml --extra-vars "var1=value1 var2=value2"
 
 ## Final Report Gist
 You can find the final report [here](https://gist.github.com/FaniD/e3217375a38c161d7f426abfb3a84300).
@@ -110,3 +110,4 @@ You can find the final report [here](https://gist.github.com/FaniD/e3217375a38c1
 * Google Summer of Code 2019 Participant: Fani Dimou ([FaniD](https://github.com/FaniD))
 * Mentor: Panteleimon Sarantos ([Pant](https://github.com/Pant)) 
 * Mentor: Efstathios Iosifidis ([iosifidis](https://github.com/iosifidis))
+
