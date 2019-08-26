@@ -59,7 +59,7 @@ Some extra tools are implemented to provide automatic restart of failed jobs and
 
 The following flowchart describes the travis.yml file and how these tools are used:
 
-![travis](https://www.dropbox.com/s/y715hwhblxw8mto/TravisNCP_resized.jpg?raw=1)
+![travis](https://www.dropbox.com/s/ufwa1djuw7b2qok/TravisNCP_resized2.jpg?raw=1)
 
 ### 2. NextCloudPi VM on VirtualBox easy setup and clone using Vagrant**
 Under the directory Vagrant, there is an automation script that creates a new NCP VM just by asking the user to provide a minimum input and can also create a clone of an existing NCP VM.
