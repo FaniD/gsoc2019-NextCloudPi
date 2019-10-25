@@ -91,6 +91,19 @@
     - debug:
         msg: "moving data directory from {{ srcdir.stdout }} to {{ datadir }}"
 
+      # resolve symlinks and use the real path 
+    - file:
+        path: "{{ datadir }}"
+        owner: www-data
+        group: www-data
+
+    - shell: cd "{{ datadir }}" && pwd -P
+      register: datadir
+
+    - file:
+        path: "{{ datadir.stdout }}"
+        state: absent
+
       # use subvolumes, if BTRFS  
     - shell: stat -fc%T "{{ basedir.stdout }}"
       register: comp1
@@ -120,14 +133,9 @@
         group: www-data
 
       # tmp upload dir
-    - stat:
-        path: "{{ datadir }}"/tmp
-      register: folder_datadirtmp
-
     - file:
         path: "{{ datadir }}"/tmp
         state: directory
-      when: not folder_datadirtmp.stat.exists
 
     - file:
         path: "{{ datadir }}"/tmp
