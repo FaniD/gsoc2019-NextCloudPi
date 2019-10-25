@@ -1,0 +1,25 @@
+#
+
+---
+- hosts: local
+  connection: local
+  tasks:
+      ## CHECKS
+    - command: chdir:/var/www/nextcloud sudo -u www-data php occ config:system:get datadirectory
+      register: datadir
+
+    - fail:
+        msg: "data directory not found"
+      when: not "{{ datadir.stdout }}"
+
+    - debug:
+        msg: "fixing permissions in {{ datadir.stdout }}"
+
+    - file:
+        path: "{{ datadir.stdout }}"/*/files
+        owner: www-data
+        group: www-data
+        mode: u+rw
+
+    - debug:
+        msg: "done"
