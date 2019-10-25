@@ -76,10 +76,46 @@ function pick_ip() {
 # Either create it from scratch
 # Or clone an existing NCP vm
 
+# Package manager
+if [[ -f /usr/bin/apt ]]; then
+  pack_man="apt"
+  search="sudo apt search"
+  install="sudo apt install <package>"
+elif [[ -f /usr/bin/apt-get ]]; then
+  pack_man="apt-get"
+  search="sudo apt-cache search"
+  install="sudo apt-get install <package>"
+elif [[ -f /usr/bin/yum ]]; then
+  pack_man="yum"
+  search="sudo yum search"
+  install="sudo yum install <package>"
+elif [[ -f /usr/bin/dnf ]]; then
+  pack_man="dnf"
+  search="sudo dnf search"
+  install="sudo dnf install <package>"
+elif [[ -f /usr/bin/zypper ]]; then
+  pack_man="zypper"
+  search="sudo zypper search"
+  install="sudo zypper install <package>"
+elif [[ -f /usr/bin/pacman ]]; then
+  pack_man="pacman"
+  search="sudo pacman -Ss"
+  install="sudo pacman -Sy <package>"
+else
+  pack_man="unknown"
+fi
+
 # Vagrant is a requirement
 while true; do
   if [[ ! -f /usr/bin/vagrant ]]; then
     echo -e "Before we proceed, please install vagrant package."
+    if [[ $pack_man != "unknown" ]]; then
+      echo -e "The package manager detected in your system is ${pack_man}."
+      echo -e "Use the following command to detect the latest vagrant package:"
+      echo -e "${search} vagrant"
+      echo -e "Then use the following command to install that package:"
+      echo -e "${install}"
+    fi
     echo -e "Type enter when you're finished."
     read ready
     [[ $ready == "" ]] && break
@@ -92,6 +128,13 @@ done
 while true; do
   if [[ ! -f /usr/bin/virtualbox ]]; then
     echo -e "Before we proceed, please install virtual box package."
+    if [[ $pack_man != "unknown" ]]; then
+      echo -e "The package manager detected in your system is ${pack_man}."
+      echo -e "Use the following command to detect the latest virtual box package:"
+      echo -e "${search} virtualbox"
+      echo -e "Then use the following command to install that package:"
+      echo -e "${install}"
+    fi
     echo -e "Type enter when you're finished."
     read ready
     [[ $ready == "" ]] && break
